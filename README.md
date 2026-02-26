@@ -1,6 +1,6 @@
 # GitHub Changelog → PowerPoint
 
-> Fetch GitHub changelog articles for **any label** (Copilot, Actions, Security, and more) and turn them into a polished presentation — powered by a Python scraper, a VS Code Copilot agent, and a Python PowerPoint generator.
+> Fetch GitHub changelog articles for **any label** (Copilot, Actions, Security, and more) and turn them into a polished presentation — powered by a Python scraper, a deterministic processing pipeline, a VS Code Copilot agent, and a Python PowerPoint generator.
 
 [![Built with GitHub Copilot](https://img.shields.io/badge/Built%20with-GitHub%20Copilot-8957e5?logo=githubcopilot)](https://github.com/features/copilot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -17,7 +17,7 @@ Special thanks to [@congiuluc](https://github.com/congiuluc) for conceiving and 
 ## ✨ Features
 
 - 🏷️ **Multi-label support** — fetch articles for any of the 13 GitHub changelog labels (see table below)
-- 🤖 **One-click workflow** — Copilot agent orchestrates Python scraping → AI summarization → PowerPoint generation
+- 🤖 **One-click workflow** — Copilot agent orchestrates scraping → batch planning → AI summarization → validation → PowerPoint generation
 - 📊 **Dark GitHub-themed slides** — widescreen 16:9 `.pptx` with section dividers, hero images, and speaker notes
 - 🌍 **Multi-language support** — summaries and notes translated into any language; titles and technical terms stay in English
 - ⏩ **Incremental processing** — already-processed articles are skipped on re-runs
@@ -25,6 +25,7 @@ Special thanks to [@congiuluc](https://github.com/congiuluc) for conceiving and 
 - 🔍 **Label & category filtering** — generate presentations filtered by label and/or category
 - 🖼️ **Fallback images** — built-in placeholder images when article hero images are unavailable
 - 🔗 **Clickable links** — each summary slide includes a hyperlink back to the original article
+- ✅ **Built-in validation** — `process_articles.py --validate` checks front matter, headings, and speaker notes
 - ⚙️ **Centralized configuration** — all labels, categories, and settings in `config.yaml`
 
 ### Available labels
@@ -75,6 +76,12 @@ uv sync
 
 ## 📖 Workflow
 
+The pipeline has three stages:
+
+1. **Fetch** (`fetch_articles.py`) — scrapes `github.blog/changelog`, saves raw `.md` files to `output/raw/`
+2. **Process** (`process_articles.py`) — deterministic pipeline: `--prepare` (batch planning), `--validate` (format checks), `--index` (index generation). AI summarization happens between `--prepare` and `--validate` using templates from `.github/prompts/`.
+3. **Present** (`create_pptx.py`) — reads processed `.md` files from `output/{locale}/`, generates `.pptx`
+
 ### Option A — One-click with the Copilot agent (recommended)
 
 Open VS Code Copilot Chat in **Agent mode** and invoke the custom agent:
@@ -94,16 +101,17 @@ You'll be asked for:
 
 The agent will:
 
-1. **Run `fetch_articles.py`** — scrapes changelog listing pages and individual articles, saves raw `.md` files to `output/raw/`
-2. **Generate summaries** — classifies each article, creates structured slide content + speaker notes in your chosen language
-3. **Save** final markdown files under `output/{locale}/` organized by type
-4. **Update** `output/{locale}/index.md` — a table of contents
-5. **Run `create_pptx.py`** — generates the PowerPoint presentation
+1. **Fetch raw articles** — runs `fetch_articles.py` to scrape changelog pages and save raw `.md` files to `output/raw/`
+2. **Prepare batch manifest** — runs `process_articles.py --prepare` to scan raw files and produce `output/batch.json`
+3. **Generate summaries** — uses AI with prompt templates from `.github/prompts/` to create structured slide content + speaker notes
+4. **Validate output** — runs `process_articles.py --validate` to check front matter, headings, and speaker notes
+5. **Generate index** — runs `process_articles.py --index` to create/update `output/{locale}/index.md`
+6. **Generate PowerPoint** — runs `create_pptx.py` to produce the final `.pptx`
 
 > [!TIP]
 > Re-running the agent for the same date range is safe — both the scraper and the agent skip articles that already have output files.
 
-### Option B — Manual two-step workflow
+### Option B — Manual three-step workflow
 
 #### Step 1 — Fetch raw articles
 
@@ -125,9 +133,38 @@ python fetch_articles.py --labels all --from-date 2026-02-01 --to-date 2026-02-2
 | `--to-date` | *required* | End date (YYYY-MM-DD) |
 | `--output-dir`, `-d` | `output/` | Output directory |
 
-> After fetching, run the Copilot agent (`/fetch-github-changelog`) to generate summaries from the raw files, or write your own summaries manually.
+> After fetching, run the Copilot agent (`@copilot-updates`) to generate summaries from the raw files, or write your own summaries manually.
 
-#### Step 2 — Generate the PowerPoint
+#### Step 2 — Process articles
+
+```bash
+# Prepare batch manifest (scan raw files, diff against processed)
+python process_articles.py --prepare --locale en --from-date 2026-02-01 --to-date 2026-02-25
+
+# After AI summarization (or manual writing), validate processed files
+python process_articles.py --validate --locale en
+
+# Generate/update index.md
+python process_articles.py --index --locale en
+
+# Run all three stages at once
+python process_articles.py --prepare --validate --index --locale en --from-date 2026-02-01 --to-date 2026-02-25
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `--prepare` | — | Scan raw files and produce `output/batch.json` |
+| `--validate` | — | Validate processed article files |
+| `--index` | — | Generate/update `index.md` |
+| `--locale`, `-l` | `en` | Locale code |
+| `--from-date` | *(none)* | Start date filter (YYYY-MM-DD) |
+| `--to-date` | *(none)* | End date filter (YYYY-MM-DD) |
+| `--labels`, `-L` | *(all)* | Comma-separated label slugs to filter |
+| `--output-dir`, `-d` | `output/` | Output directory |
+
+> At least one of `--prepare`, `--validate`, or `--index` must be specified.
+
+#### Step 3 — Generate the PowerPoint
 
 ```bash
 # Default: all articles in output/en/
@@ -233,17 +270,23 @@ All labels, categories, colors, and defaults are defined in [`config.yaml`](conf
 ```
 copilot-updates/
 ├── .github/
-│   └── copilot/
-│       └── agents/
-│           └── copilot-updates.agent.md  # Custom Copilot agent
-├── imgs/                                      # Fallback hero images
+│   ├── agents/
+│   │   └── copilot-updates.agent.md   # Custom Copilot agent (6-step orchestration)
+│   ├── copilot-instructions.md        # Repo-level Copilot rules
+│   └── prompts/                       # AI summarization templates
+│       ├── summarize-new-releases.prompt.md
+│       ├── summarize-improvements.prompt.md
+│       ├── summarize-deprecations.prompt.md
+│       └── translate-content.prompt.md
+├── imgs/                              # Fallback hero images
 │   ├── featured-v3-new-releases.png
 │   ├── featured-v3-improvements.png
 │   └── featured-v3-deprecations.png
-├── config.yaml                                # Centralized configuration
-├── fetch_articles.py                          # Python scraper (Step 1)
-├── create_pptx.py                             # PowerPoint generator (Step 2)
-├── pyproject.toml                             # Project metadata & dependencies
+├── config.yaml                        # Centralized configuration
+├── fetch_articles.py                  # Stage 1 — scraper
+├── process_articles.py                # Stage 2 — batch planning, validation, index
+├── create_pptx.py                     # Stage 3 — PowerPoint generator
+├── pyproject.toml                     # Project metadata & dependencies
 ├── LICENSE
 └── README.md
 ```
