@@ -18,8 +18,11 @@ Special thanks to [@congiuluc](https://github.com/congiuluc) for conceiving and 
 
 - 🤖 **Copilot agent prompt** fetches and classifies changelog articles automatically
 - 📊 **Dark GitHub-themed slides** — widescreen 16:9 `.pptx` with section dividers, hero images, and speaker notes
-- 🌍 **Multi-language support** — summaries and notes can be translated into any language
+- 🌍 **Multi-language support** — summaries and notes translated into any language; titles and technical terms stay in English
+- ⏩ **Incremental processing** — already-processed articles are skipped on re-runs
 - 🚀 New Releases · ✨ Improvements · ⚠️ Deprecations — articles sorted by type
+- 🖼️ **Fallback images** — built-in placeholder images when article hero images are unavailable
+- 🔗 **Clickable links** — each summary slide includes a hyperlink back to the original article
 
 ---
 
@@ -69,30 +72,35 @@ You'll be asked for:
 
 The agent will:
 
-1. Fetch **all** article listings from `github.blog/changelog` filtered by `copilot` label
+1. Fetch **all** article listings from `github.blog/changelog` filtered by `copilot` label (following all pagination links)
 2. Fetch each individual article page and **save raw content** under `output/raw/`
-3. Classify each article by type (new-release, improvement, deprecation)
-4. Generate a summary and speaker notes (in your chosen language)
-5. Save final structured markdown files under `output/` organized by type
+3. Classify each article by type (`new-release`, `improvement`, `deprecation`)
+4. Generate **structured slide content** and **speaker notes** (in your chosen language)
+5. Save final markdown files under `output/{locale}/` organized by type (e.g. `output/en/`, `output/it/`)
+6. Update `output/{locale}/index.md` — a table of contents with links to all articles
+
+> [!TIP]
+> Re-running the prompt for the same date range is safe — the agent skips articles that already have output files, so only new articles are processed.
 
 <details>
 <summary>📁 Output file structure</summary>
 
 ```
 output/
-├── index.md                          # Table of contents
-├── raw/                              # Raw fetched content (all articles)
+├── raw/                                  # Raw fetched content (shared, language-independent)
 │   ├── 2025-03-15-some-feature.md
 │   ├── 2025-04-01-some-improvement.md
 │   └── ...
-├── new-releases/                     # Classified final files
-│   ├── 2025-03-15-some-feature.md
-│   └── ...
-├── improvements/
-│   ├── 2025-04-01-some-improvement.md
-│   └── ...
-└── deprecations/
-    └── ...
+└── en/                                   # Locale folder (en, it, es, fr, …)
+    ├── index.md                          # Table of contents
+    ├── new-releases/                     # Classified final files
+    │   ├── 2025-03-15-some-feature.md
+    │   └── ...
+    ├── improvements/
+    │   ├── 2025-04-01-some-improvement.md
+    │   └── ...
+    └── deprecations/
+        └── ...
 ```
 
 </details>
@@ -106,23 +114,25 @@ python create_pptx.py
 Options:
 
 ```bash
-python create_pptx.py --output-dir output/ --output my-presentation.pptx
+python create_pptx.py --locale it --output my-presentation.pptx
 python create_pptx.py --from-date 2025-01-01 --to-date 2025-12-31
+python create_pptx.py --output-dir output/ --locale en
 ```
 
 | Flag | Default | Description |
 |---|---|---|
-| `--output-dir`, `-d` | `output/` | Directory with markdown files |
+| `--output-dir`, `-d` | `output/` | Root directory containing locale subfolders |
+| `--locale`, `-l` | `en` | Locale subfolder to read from (e.g. `en`, `it`, `es`) |
 | `--output`, `-o` | auto-generated | Output `.pptx` filename |
-| `--from-date` | auto-detected | Start date shown on title slide |
-| `--to-date` | auto-detected | End date shown on title slide |
+| `--from-date` | auto-detected | Start date filter and title-slide label |
+| `--to-date` | auto-detected | End date filter and title-slide label |
 
-The script produces a widescreen (16:9) `.pptx` with dark GitHub-themed slides:
+The script reads markdown files from `output/{locale}/{new-releases,improvements,deprecations}/` and produces a widescreen (16:9) `.pptx` with dark GitHub-themed slides:
 
 - **Title slide** with the date range
 - **Section dividers** for New Releases 🚀, Improvements ✨, Deprecations ⚠️
-- **Article title slide** with hero image
-- **Summary slide** with speaker notes in the Notes pane
+- **Article title slide** with hero image (or fallback placeholder)
+- **Summary slide** with structured content, clickable article link, and speaker notes in the Notes pane
 
 > [!NOTE]
 > When a non-English language is specified in Step 1, summaries and speaker notes are translated into that language. Article titles, product names, and technical terms always stay in English.
@@ -149,17 +159,54 @@ article_url: "https://github.blog/changelog/2025-03-15-slug"
 
 ---
 
-## Summary
+## What's new
 
-Summary text here.
+One-liner with **key product/feature** and **status**.
+
+### Why it matters
+
+- **Key benefit 1** — short explanation
+- **Key benefit 2** — short explanation
+
+### Where you can use it
+
+- **Platform 1** — details
+
+### Who gets it
+
+- Plans, rollout info
 
 <!--
 speaker_notes:
-Speaker notes in the target language.
+Speaker notes in the target language (5–8 sentences).
 -->
 ```
 
+The `##` heading varies by article type:
+- **New Releases** → `## What's new`
+- **Improvements** → `## What changed`
+- **Deprecations** → `## What's deprecated`
+
 </details>
+
+---
+
+## 📂 Project structure
+
+```
+copilot-updates/
+├── .github/
+│   └── prompts/
+│       └── fetch-copilot-news.prompt.md   # Copilot agent prompt
+├── imgs/                                   # Fallback hero images
+│   ├── featured-v3-new-releases.png
+│   ├── featured-v3-improvements.png
+│   └── featured-v3-deprecations.png
+├── create_pptx.py                          # PowerPoint generator
+├── pyproject.toml                          # Project metadata & dependencies
+├── LICENSE
+└── README.md
+```
 
 ---
 
@@ -168,6 +215,6 @@ Speaker notes in the target language.
 This repository was created entirely with [GitHub Copilot](https://github.com/features/copilot).
 
 
-## �📄 License
+## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).

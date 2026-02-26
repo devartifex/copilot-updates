@@ -1,5 +1,5 @@
 ---
-mode: agent
+mode: 'agent'
 tools: ['web/fetch', 'edit', 'read', 'search']
 description: 'Fetch GitHub Copilot changelog articles and create structured markdown files for PowerPoint conversion'
 ---
@@ -17,7 +17,8 @@ Fetch GitHub Copilot changelog articles from the GitHub Blog and produce structu
 ## Rules (apply throughout all steps)
 
 - Process **ALL** articles in the date range — never stop early or skip items.
-- **Skip existing articles**: Before fetching or processing an article, check if the final output file already exists in `output/{new-releases,improvements,deprecations}/YYYY-MM-DD-slug.md`. If it does, skip that article entirely (do not re-fetch, re-process, or overwrite it). Only process **new** articles not already present.
+- **Locale folder**: Derive a short locale code from `${input:language}` (e.g. `english` → `en`, `italian` → `it`, `spanish` → `es`, `french` → `fr`, `german` → `de`, `portuguese` → `pt`, `japanese` → `ja`, `chinese` → `zh`, `korean` → `ko`). All output files go under `output/{locale}/` (e.g. `output/en/`, `output/it/`). The `raw/` folder stays shared at `output/raw/` (language-independent).
+- **Skip existing articles**: Before fetching or processing an article, check if the final output file already exists in `output/{locale}/{new-releases,improvements,deprecations}/YYYY-MM-DD-slug.md`. If it does, skip that article entirely (do not re-fetch, re-process, or overwrite it). Only process **new** articles not already present.
 - Follow **all pagination links** on listing pages; do not stop at the first page.
 - **Language handling**: When `${input:language}` is `english` (default), write everything in English. When a different language is specified, translate **summaries** and **speaker notes** into that language. **Do NOT translate**: article titles (keep the original English title in YAML `title`, `# Heading`, and slide references), product/feature names (e.g. "Copilot", "GitHub Actions", "Gemini 3.1 Pro"), proper nouns, technical terms, or any text that originates from the source article and would lose meaning if translated.
 - YAML values must be **double-quoted**. Filenames must match the URL slug.
@@ -84,12 +85,12 @@ Both must be written in `${input:language}`. Keep article titles, product names,
 
 If the type could not be determined from the listing badges, infer it from the article content (e.g. mentions of retirement → `deprecation`).
 
-Save final files organized by type:
+Save final files organized by locale and type:
 
 ```
-output/new-releases/YYYY-MM-DD-slug.md
-output/improvements/YYYY-MM-DD-slug.md
-output/deprecations/YYYY-MM-DD-slug.md
+output/{locale}/new-releases/YYYY-MM-DD-slug.md
+output/{locale}/improvements/YYYY-MM-DD-slug.md
+output/{locale}/deprecations/YYYY-MM-DD-slug.md
 ```
 
 ### Slide content structure by type
@@ -191,9 +192,9 @@ Speaker notes in ${input:language} here (5–8 sentences).
 
 ## Step 4 — Update index file
 
-After all articles are processed, **update** (do not overwrite) `output/index.md`:
+After all articles are processed, **update** (do not overwrite) `output/{locale}/index.md`:
 
-1. If `output/index.md` already exists, **read it** and parse the existing entries.
+1. If `output/{locale}/index.md` already exists, **read it** and parse the existing entries.
 2. **Merge** newly processed articles into the existing list (avoid duplicates — match by filename).
 3. **Update the date range** in the title heading to span the full range of all articles present (min date → max date).
 4. **Sort** entries within each section by date (ascending).
