@@ -1,0 +1,108 @@
+# ── GitHub Changelog Pipeline Configuration ──────────────────────────────────
+# Central config for fetch_articles.py, create_pptx.py, and the agent prompt.
+
+# Base URL for the GitHub changelog
+changelog_base_url: "https://github.blog/changelog"
+
+# ── Labels ───────────────────────────────────────────────────────────────────
+# All available labels on github.blog/changelog.
+# slug: used in URLs (?label=slug)
+# display: human-readable name shown on the blog
+labels:
+  account-management:
+    display: "Account Management"
+  actions:
+    display: "Actions"
+  application-security:
+    display: "Application Security"
+  client-apps:
+    display: "Client Apps"
+  collaboration-tools:
+    display: "Collaboration Tools"
+  community-engagement:
+    display: "Community Engagement"
+  copilot:
+    display: "Copilot"
+  ecosystem-and-accessibility:
+    display: "Ecosystem & Accessibility"
+  enterprise-management-tools:
+    display: "Enterprise Management Tools"
+  platform-governance:
+    display: "Platform Governance"
+  projects-and-issues:
+    display: "Projects & Issues"
+  supply-chain-security:
+    display: "Supply Chain Security"
+  universe25:
+    display: "Universe '25"
+
+# ── Categories (article types) ───────────────────────────────────────────────
+# Maps the canonical type key to display info and output directory name.
+categories:
+  new-release:
+    title: "New Releases"
+    emoji: "🚀"
+    dir: "new-releases"
+    color: [0x3F, 0xB9, 0x50]   # green
+  improvement:
+    title: "Improvements"
+    emoji: "✨"
+    dir: "improvements"
+    color: [0x58, 0xA6, 0xFF]   # blue
+  deprecation:
+    title: "Deprecations"
+    emoji: "⚠️"
+    dir: "deprecations"
+    color: [0xF8, 0x54, 0x49]   # red
+
+# Order in which sections appear in the presentation
+category_order:
+  - new-release
+  - improvement
+  - deprecation
+
+# ── Type aliases ─────────────────────────────────────────────────────────────
+# Maps raw type strings from front matter / badge labels to canonical keys.
+type_aliases:
+  new-releases: new-release
+  new-release: new-release
+  release: new-release
+  new: new-release
+  improvements: improvement
+  improvement: improvement
+  deprecations: deprecation
+  deprecation: deprecation
+  retired: deprecation
+
+# ── Badge text → canonical type ──────────────────────────────────────────────
+# Maps the badge text seen on changelog listing pages (e.g. "RELEASE",
+# "IMPROVEMENT", "RETIRED") to the canonical type key.
+badge_type_map:
+  RELEASE: new-release
+  NEW: new-release
+  IMPROVEMENT: improvement
+  RETIRED: deprecation
+  DEPRECATION: deprecation
+
+# ── Display name → label slug ────────────────────────────────────────────────
+# Maps the label display text seen on listing pages to the slug used in URLs.
+display_to_label_slug:
+  "ACCOUNT MANAGEMENT": account-management
+  "ACTIONS": actions
+  "APPLICATION SECURITY": application-security
+  "CLIENT APPS": client-apps
+  "COLLABORATION TOOLS": collaboration-tools
+  "COMMUNITY ENGAGEMENT": community-engagement
+  "COPILOT": copilot
+  "ECOSYSTEM & ACCESSIBILITY": ecosystem-and-accessibility
+  "ENTERPRISE MANAGEMENT TOOLS": enterprise-management-tools
+  "PLATFORM GOVERNANCE": platform-governance
+  "PROJECTS & ISSUES": projects-and-issues
+  "SUPPLY CHAIN SECURITY": supply-chain-security
+  "UNIVERSE '25": universe25
+
+# ── Defaults ─────────────────────────────────────────────────────────────────
+defaults:
+  locale: "en"
+  labels: ["copilot"]          # default label filter for fetching
+  output_dir: "output"

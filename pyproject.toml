@@ -1,6 +1,7 @@
 [project]
 name = "copilot-updates"
-version = "0.1.0"
+version = "0.2.0"
+description = "Fetch GitHub changelog articles for any label and generate PowerPoint presentations"
 requires-python = ">=3.11"
 dependencies = [
     "requests>=2.31",
@@ -10,3 +11,8 @@ dependencies = [
     "Pillow>=10.0",
     "PyYAML>=6.0",
 ]
+
+[project.scripts]
+fetch-changelog = "fetch_articles:main"
+process-articles = "process_articles:main"
+create-pptx = "create_pptx:main"
