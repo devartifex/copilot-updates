@@ -81,6 +81,26 @@ def _build_type_aliases(config: dict) -> dict[str, str]:
     }
 
 
+def _build_colors(config: dict) -> dict[str, RGBColor]:
+    """Build the colour palette from config.yaml, falling back to Primer defaults."""
+    defaults = {
+        "bg_dark":       [0x0D, 0x11, 0x17],
+        "canvas_subtle": [0x16, 0x1B, 0x22],
+        "accent":        [0x44, 0x93, 0xF8],
+        "text_primary":  [0xE6, 0xED, 0xF3],
+        "text_light":    [0xC9, 0xD1, 0xD9],
+        "text_muted":    [0x84, 0x8D, 0x97],
+        "border":        [0x30, 0x36, 0x3D],
+        "title":         [0x6E, 0x54, 0x94],
+    }
+    cfg_colors = config.get("colors", {})
+    palette: dict[str, RGBColor] = {}
+    for key, fallback in defaults.items():
+        c = cfg_colors.get(key, fallback)
+        palette[key] = RGBColor(c[0], c[1], c[2])
+    return palette
+
+
 # Load config at module level
 _CONFIG = _load_config()
 
@@ -90,12 +110,20 @@ _CONFIG = _load_config()
 SLIDE_WIDTH = Inches(13.333)
 SLIDE_HEIGHT = Inches(7.5)
 
-# Color palette (GitHub dark theme)
-COLOR_BG_DARK = RGBColor(0x0D, 0x11, 0x17)
-COLOR_ACCENT = RGBColor(0x58, 0xA6, 0xFF)
-COLOR_TEXT_WHITE = RGBColor(0xFF, 0xFF, 0xFF)
-COLOR_TEXT_LIGHT = RGBColor(0xC9, 0xD1, 0xD9)
-COLOR_TEXT_MUTED = RGBColor(0x8B, 0x94, 0x9E)
+# Color palette — driven by config.yaml (GitHub Primer dark theme defaults)
+_PALETTE = _build_colors(_CONFIG)
+COLOR_BG_DARK = _PALETTE["bg_dark"]
+COLOR_CANVAS_SUBTLE = _PALETTE["canvas_subtle"]
+COLOR_ACCENT = _PALETTE["accent"]
+COLOR_TEXT_PRIMARY = _PALETTE["text_primary"]
+COLOR_TEXT_WHITE = COLOR_TEXT_PRIMARY                 # backward-compat alias
+COLOR_TEXT_LIGHT = _PALETTE["text_light"]
+COLOR_TEXT_MUTED = _PALETTE["text_muted"]
+COLOR_BORDER = _PALETTE["border"]
+COLOR_TITLE = _PALETTE["title"]
+
+# Typography — GitHub brand font (install from https://github.com/github/mona-sans)
+FONT_PRIMARY = "Mona Sans"
 
 # Per-section theming (driven by config.yaml)
 SECTION_META: dict[str, dict] = _build_section_meta(_CONFIG)
@@ -269,7 +297,7 @@ def _set_slide_bg(slide, color: RGBColor = COLOR_BG_DARK):
 
 def _add_text(slide, left, top, width, height, text, *,
               size=18, color=COLOR_TEXT_WHITE, bold=False,
-              align=PP_ALIGN.LEFT, font="Segoe UI"):
+              align=PP_ALIGN.LEFT, font=FONT_PRIMARY):
     """Add a single-paragraph styled text box and return the shape."""
     box = slide.shapes.add_textbox(left, top, width, height)
     box.text_frame.word_wrap = True
@@ -280,6 +308,36 @@ def _add_text(slide, left, top, width, height, text, *,
     p.font.bold = bold
     p.font.name = font
     p.alignment = align
+    return box
+
+
+def _add_badge(slide, left, top, text: str, bg_color: RGBColor):
+    """Add a small colored pill/badge (like the GitHub blog category labels)."""
+    # Size the badge to fit the text
+    char_w = Pt(7.5)  # approximate width per character at 10pt
+    pad_x = Pt(16)
+    badge_w = int(len(text) * char_w + pad_x * 2)
+    badge_h = int(Pt(22))
+    box = slide.shapes.add_textbox(left, top, badge_w, badge_h)
+    tf = box.text_frame
+    tf.word_wrap = False
+    # Set textbox fill as badge background
+    fill = box.fill
+    fill.solid()
+    fill.fore_color.rgb = bg_color
+    p = tf.paragraphs[0]
+    p.alignment = PP_ALIGN.CENTER
+    run = p.add_run()
+    run.text = text
+    run.font.size = Pt(10)
+    run.font.bold = True
+    run.font.color.rgb = COLOR_TEXT_PRIMARY
+    run.font.name = FONT_PRIMARY
+    # Vertical centering
+    tf.margin_top = Pt(3)
+    tf.margin_bottom = Pt(3)
+    tf.margin_left = Pt(8)
+    tf.margin_right = Pt(8)
     return box
 
 
@@ -349,21 +407,30 @@ def create_section_slide(prs: Presentation, section_type: str, count: int):
 
 def create_article_title_slide(prs: Presentation, article: Article,
                                image_stream: io.BytesIO | None):
-    """Create slide 1 for an article: title + hero image."""
+    """Create slide 1 for an article: title + hero image (clean layout)."""
     slide = _blank_slide(prs)
     color = article.section_color
 
-    _add_text(slide, Inches(0.8), Inches(0.4), Inches(3), Inches(0.4),
-              article.section_title.upper(), size=12, color=color, bold=True)
-    _add_text(slide, Inches(0.8), Inches(0.8), Inches(3), Inches(0.4),
-              article.date, size=12, color=COLOR_TEXT_MUTED)
-    _add_text(slide, Inches(0.8), Inches(1.4), Inches(11.5), Inches(1.6),
-              article.title, size=32, color=COLOR_TEXT_WHITE, bold=True)
+    # Thin colored accent line at the top to indicate category
+    line_box = slide.shapes.add_textbox(Inches(0), Inches(0), SLIDE_WIDTH, Pt(4))
+    line_box.fill.solid()
+    line_box.fill.fore_color.rgb = color
+
+    # Date — small, top-right corner
+    _add_text(slide, Inches(10.0), Inches(0.3), Inches(2.8), Inches(0.4),
+              article.date, size=12, color=COLOR_TEXT_MUTED,
+              align=PP_ALIGN.RIGHT, font="Consolas")
+
+    # Title — large, white, centered
+    _add_text(slide, Inches(0.8), Inches(0.8), Inches(11.5), Inches(2.0),
+              article.title, size=36, color=COLOR_TEXT_WHITE, bold=True,
+              align=PP_ALIGN.CENTER)
 
     stream = _resolve_image(image_stream, article.type)
     if stream:
         try:
-            _place_image(slide, stream, avail_top=Inches(3.2))
+            _place_image(slide, stream, avail_top=Inches(3.0),
+                         avail_h=Inches(4.2))
         except Exception as exc:
             print(f"  ⚠ Could not add image to slide: {exc}")
     else:
@@ -374,7 +441,7 @@ def create_article_title_slide(prs: Presentation, article: Article,
 
 def _add_styled_runs(paragraph, text: str, *,
                      base_size: int = 16, base_color: RGBColor = COLOR_TEXT_LIGHT,
-                     bold_color: RGBColor | None = None, font: str = "Segoe UI"):
+                     bold_color: RGBColor | None = None, font: str = FONT_PRIMARY):
     """Parse inline **bold** markers and add styled runs to a paragraph."""
     parts = re.split(r"(\*\*.*?\*\*)", text)
     for part in parts:
@@ -398,7 +465,7 @@ def _compute_scale_factor(summary: str) -> float:
 
     The heuristic counts "visual lines" – i.e. how many wrapped lines the
     text would roughly occupy at the default font size on a slide that is
-    ~11.5 inches wide with a ~16 pt Segoe UI font (~100 characters per line).
+    ~11.5 inches wide with a ~16 pt Mona Sans font (~100 characters per line).
     """
     if not summary:
         return 1.0
@@ -419,184 +486,261 @@ def _compute_scale_factor(summary: str) -> float:
     return max(factor, 0.55)             # never shrink below 55 %
 
 
+def _set_cell_border(tcPr, color_hex: str):
+    """Set thin borders on all edges of a table cell."""
+    for edge in ("lnL", "lnR", "lnT", "lnB"):
+        ln = tcPr.makeelement(qn(f"a:{edge}"), {"w": "6350", "cap": "flat", "cmpd": "sng"})
+        solidFill = ln.makeelement(qn("a:solidFill"), {})
+        srgbClr = solidFill.makeelement(qn("a:srgbClr"), {"val": color_hex})
+        solidFill.append(srgbClr)
+        ln.append(solidFill)
+        tcPr.append(ln)
+
+
 def create_article_summary_slide(prs: Presentation, article: Article):
-    """Create slide 2 for an article: structured summary + speaker notes."""
+    """Create slide 2 for an article: structured summary + speaker notes.
+
+    Content is split into pre-table, table, and post-table segments so that
+    each is placed sequentially and nothing overlaps.
+    """
     slide = _blank_slide(prs)
 
     # --- Compute a scale factor to shrink fonts when the body is long ---
     sf = _compute_scale_factor(article.summary)
 
-    title_size = max(int(22 * sf), 14)
+    title_size = max(int(28 * sf), 20)
     heading_size = max(int(20 * sf), 13)
     sub_heading_size = max(int(13 * sf), 9)
     body_size = max(int(16 * sf), 10)
     bullet_size = body_size
 
-    _add_text(slide, Inches(0.8), Inches(0.4), Inches(11.5), Inches(0.8),
-              article.title, size=title_size, color=article.section_color, bold=True)
+    # Thin colored accent line at the top
+    line_box = slide.shapes.add_textbox(Inches(0), Inches(0), SLIDE_WIDTH, Pt(4))
+    line_box.fill.solid()
+    line_box.fill.fore_color.rgb = article.section_color
 
-    box = slide.shapes.add_textbox(Inches(0.8), Inches(1.5), Inches(11.5), Inches(5.2))
-    tf = box.text_frame
-    tf.word_wrap = True
+    # Title — prominent, top left; date — top right corner
+    _add_text(slide, Inches(0.8), Inches(0.2), Inches(9.5), Inches(1.0),
+              article.title, size=title_size, color=COLOR_TEXT_WHITE, bold=True)
+    _add_text(slide, Inches(10.5), Inches(0.3), Inches(2.3), Inches(0.4),
+              article.date, size=10, color=COLOR_TEXT_MUTED,
+              align=PP_ALIGN.RIGHT)
 
-    first_para = True
-    in_table = False
-
-    # Pre-scan for table rows so we can render them as a real table
+    # ── Parse content into pre-table, table, and post-table segments ─────
     lines = article.summary.split("\n")
+
     table_rows: list[list[str]] = []
-    table_start_idx = -1
-    non_table_lines: list[tuple[int, str]] = []
+    table_line_indices: set[int] = set()
 
-    for idx, raw_line in enumerate(lines):
-        line = raw_line.strip()
-        if not line:
-            non_table_lines.append((idx, ""))
+    for idx, raw in enumerate(lines):
+        stripped = raw.strip()
+        if not stripped:
             continue
-        # Skip separator rows
-        if re.match(r"^\|[-\s|:]+\|$", line):
+        # Separator rows  (e.g. |---|---|)
+        if re.match(r"^\|[-\s|:]+\|$", stripped):
+            table_line_indices.add(idx)
             continue
-        if line.startswith("|") and line.endswith("|"):
-            if table_start_idx == -1:
-                table_start_idx = idx
-            table_rows.append([c.strip() for c in line.strip("|").split("|")])
-        else:
-            non_table_lines.append((idx, line))
+        # Data rows
+        if stripped.startswith("|") and stripped.endswith("|"):
+            table_line_indices.add(idx)
+            table_rows.append([c.strip() for c in stripped.strip("|").split("|")])
 
-    # Render real table if we found table rows
-    if table_rows and len(table_rows) >= 2:
-        n_cols = len(table_rows[0])
-        n_rows = len(table_rows)
-        tbl_width = Inches(9)
-        tbl_left = Inches(0.8)
-        # We'll place the table after the heading; calculate later
-        _table_placeholder = (tbl_left, n_rows, n_cols, tbl_width, table_rows)
+    has_table = len(table_rows) >= 2
+
+    pre_table_lines: list[str] = []
+    post_table_lines: list[str] = []
+
+    if has_table:
+        sorted_ti = sorted(table_line_indices)
+        first_table_idx, last_table_idx = sorted_ti[0], sorted_ti[-1]
+        for idx, line in enumerate(lines):
+            if idx < first_table_idx:
+                pre_table_lines.append(line)
+            elif idx > last_table_idx:
+                post_table_lines.append(line)
     else:
-        _table_placeholder = None
+        pre_table_lines = lines
 
-    for idx, raw_line in non_table_lines:
-        line = raw_line.strip() if raw_line else ""
-        if not line:
-            continue
+    # ── Helper: render markdown lines into a text frame ──────────────────
+    def _render_lines(tf, line_list):
+        first_p = True
+        for raw_line in line_list:
+            line = raw_line.strip() if raw_line else ""
+            if not line:
+                continue
 
-        # --- ## Main heading
-        if line.startswith("## "):
-            heading_text = line.lstrip("# ").strip()
-            p = tf.paragraphs[0] if first_para else tf.add_paragraph()
-            first_para = False
-            run = p.add_run()
-            run.text = heading_text
-            run.font.size = Pt(heading_size)
-            run.font.bold = True
-            run.font.color.rgb = COLOR_TEXT_WHITE
-            run.font.name = "Segoe UI"
-            p.space_before = Pt(max(int(8 * sf), 4))
-            p.space_after = Pt(max(int(6 * sf), 3))
-            continue
+            # ## Main heading
+            if line.startswith("## "):
+                heading_text = line.lstrip("# ").strip()
+                p = tf.paragraphs[0] if first_p else tf.add_paragraph()
+                first_p = False
+                run = p.add_run()
+                run.text = heading_text
+                run.font.size = Pt(heading_size)
+                run.font.bold = True
+                run.font.color.rgb = COLOR_TEXT_WHITE
+                run.font.name = FONT_PRIMARY
+                p.space_before = Pt(max(int(8 * sf), 4))
+                p.space_after = Pt(max(int(6 * sf), 3))
+                continue
 
-        # --- ### Sub-heading
-        if line.startswith("### "):
-            heading_text = line.lstrip("# ").strip()
-            p = tf.paragraphs[0] if first_para else tf.add_paragraph()
-            first_para = False
-            p.space_before = Pt(max(int(14 * sf), 6))
-            p.space_after = Pt(max(int(4 * sf), 2))
-            run = p.add_run()
-            run.text = heading_text.upper()
-            run.font.size = Pt(sub_heading_size)
-            run.font.bold = True
-            run.font.color.rgb = article.section_color
-            run.font.name = "Segoe UI"
-            continue
+            # ### Sub-heading
+            if line.startswith("### "):
+                heading_text = line.lstrip("# ").strip()
+                p = tf.paragraphs[0] if first_p else tf.add_paragraph()
+                first_p = False
+                p.space_before = Pt(max(int(14 * sf), 6))
+                p.space_after = Pt(max(int(4 * sf), 2))
+                run = p.add_run()
+                run.text = heading_text.upper()
+                run.font.size = Pt(sub_heading_size)
+                run.font.bold = True
+                run.font.color.rgb = article.section_color
+                run.font.name = FONT_PRIMARY
+                continue
 
-        # --- Bullet point (- text or numbered 1. text)
-        if re.match(r"^[-•]\s+", line) or re.match(r"^\d+\.\s+", line):
-            text = re.sub(r"^[-•]\s+", "", line)
-            text = re.sub(r"^\d+\.\s+", "", text)
-            p = tf.paragraphs[0] if first_para else tf.add_paragraph()
-            first_para = False
-            p.level = 0
-            p.space_after = Pt(max(int(4 * sf), 2))
-            # Add bullet character
-            bullet_run = p.add_run()
-            bullet_run.text = "•  "
-            bullet_run.font.size = Pt(bullet_size)
-            bullet_run.font.color.rgb = article.section_color
-            bullet_run.font.name = "Segoe UI"
-            _add_styled_runs(p, text, base_size=body_size, base_color=COLOR_TEXT_LIGHT)
-            continue
+            # Bullet point (- text or numbered 1. text)
+            if re.match(r"^[-•]\s+", line) or re.match(r"^\d+\.\s+", line):
+                text = re.sub(r"^[-•]\s+", "", line)
+                text = re.sub(r"^\d+\.\s+", "", text)
+                p = tf.paragraphs[0] if first_p else tf.add_paragraph()
+                first_p = False
+                p.level = 0
+                p.space_after = Pt(max(int(4 * sf), 2))
+                bullet_run = p.add_run()
+                bullet_run.text = "•  "
+                bullet_run.font.size = Pt(bullet_size)
+                bullet_run.font.color.rgb = article.section_color
+                bullet_run.font.name = FONT_PRIMARY
+                _add_styled_runs(p, text, base_size=body_size,
+                                 base_color=COLOR_TEXT_LIGHT)
+                continue
 
-        # --- Regular paragraph text
-        p = tf.paragraphs[0] if first_para else tf.add_paragraph()
-        first_para = False
-        _add_styled_runs(p, line, base_size=body_size, base_color=COLOR_TEXT_LIGHT)
-        p.space_after = Pt(max(int(8 * sf), 4))
+            # Regular paragraph text
+            p = tf.paragraphs[0] if first_p else tf.add_paragraph()
+            first_p = False
+            _add_styled_runs(p, line, base_size=body_size,
+                             base_color=COLOR_TEXT_LIGHT)
+            p.space_after = Pt(max(int(8 * sf), 4))
 
-    # --- Insert real table if present
-    if _table_placeholder:
-        tbl_left, n_rows, n_cols, tbl_width, rows_data = _table_placeholder
-        row_h = Inches(0.35)
-        tbl_height = row_h * n_rows
-        # Simple heuristic: count rendered paragraphs to estimate Y position
-        n_paras = len([p for p in tf.paragraphs if p.text.strip()])
-        tbl_top = int(Inches(1.5) + Pt(24) * min(n_paras, 4))
-        table_shape = slide.shapes.add_table(n_rows, n_cols, tbl_left, tbl_top, tbl_width, tbl_height)
+    # ── Estimate visual height (in points) for a list of lines ───────────
+    def _est_height_pt(line_list):
+        h = 0.0
+        for raw in line_list:
+            line = raw.strip() if raw else ""
+            if not line:
+                continue
+            if line.startswith("## "):
+                h += heading_size * 2.2
+            elif line.startswith("### "):
+                h += sub_heading_size * 3.0
+            elif re.match(r"^[-•]\s+", line) or re.match(r"^\d+\.\s+", line):
+                text = re.sub(r"^[-•]\s+|^\d+\.\s+", "", line)
+                h += body_size * 1.6 * max(1, len(text) / 85)
+            else:
+                h += body_size * 1.8 * max(1, len(line) / 85)
+        return h
+
+    # ── Layout constants ─────────────────────────────────────────────────
+    CONTENT_LEFT = Inches(0.8)
+    CONTENT_WIDTH = Inches(11.5)
+    LINK_Y = Inches(7.0)
+    MAX_CONTENT_Y = Inches(6.8)
+
+    current_y = Inches(1.1)
+
+    # ── Pre-table text ───────────────────────────────────────────────────
+    non_empty_pre = [l for l in pre_table_lines if l.strip()]
+    if non_empty_pre:
+        est_h = int(Pt(int(_est_height_pt(pre_table_lines))))
+        est_h = max(est_h, int(Pt(30)))  # minimum height
+        est_h = min(est_h, int(MAX_CONTENT_Y - current_y))
+        box = slide.shapes.add_textbox(
+            CONTENT_LEFT, int(current_y), CONTENT_WIDTH, est_h
+        )
+        box.text_frame.word_wrap = True
+        _render_lines(box.text_frame, pre_table_lines)
+        current_y += est_h + int(Pt(8))
+
+    # ── Table ────────────────────────────────────────────────────────────
+    if has_table:
+        n_cols = max(len(r) for r in table_rows)
+        n_rows = len(table_rows)
+        row_h = Inches(0.38)
+        tbl_width = Inches(10.5)
+        tbl_height = int(row_h * n_rows)
+
+        # Shrink rows if the table would exceed available space
+        available = int(MAX_CONTENT_Y) - int(current_y)
+        if tbl_height > available and available > int(Inches(1)):
+            row_h = available // n_rows
+            tbl_height = int(row_h * n_rows)
+
+        table_shape = slide.shapes.add_table(
+            n_rows, n_cols, CONTENT_LEFT, int(current_y),
+            tbl_width, tbl_height
+        )
         tbl = table_shape.table
 
-        for r, row_data in enumerate(rows_data):
-            for c, cell_text in enumerate(row_data):
+        for r, row_data in enumerate(table_rows):
+            for c in range(n_cols):
+                cell_text = row_data[c] if c < len(row_data) else ""
                 cell = tbl.cell(r, c)
                 cell.text = ""
                 p = cell.text_frame.paragraphs[0]
-                # Strip bold markers for cell text
                 clean = re.sub(r"\*\*(.*?)\*\*", r"\1", cell_text)
                 p.text = clean
-                p.font.size = Pt(14)
-                p.font.name = "Segoe UI"
+                p.font.size = Pt(max(int(14 * sf), 9))
+                p.font.name = FONT_PRIMARY
                 p.font.color.rgb = COLOR_TEXT_WHITE if r == 0 else COLOR_TEXT_LIGHT
                 p.font.bold = r == 0
                 # Cell background
                 tcPr = cell._tc.get_or_add_tcPr()
                 solidFill = tcPr.makeelement(qn("a:solidFill"), {})
-                srgbClr = solidFill.makeelement(qn("a:srgbClr"), {"val": "161B22" if r == 0 else "0D1117"})
+                bg_hex = "161B22" if r == 0 else "0D1117"
+                srgbClr = solidFill.makeelement(qn("a:srgbClr"), {"val": bg_hex})
                 solidFill.append(srgbClr)
                 tcPr.append(solidFill)
+                # Subtle GitHub-style cell borders
+                _set_cell_border(tcPr, "30363D")
 
-        # Style table borders
+        # Table-level properties
         tbl_xml = tbl._tbl
         tblPr = tbl_xml.tblPr
         if tblPr is None:
             tblPr = tbl_xml.makeelement(qn("a:tblPr"), {})
             tbl_xml.insert(0, tblPr)
-        # Remove default borders by setting bandRow off
         tblPr.set("bandRow", "0")
         tblPr.set("bandCol", "0")
         tblPr.set("firstRow", "1")
 
-    # --- Clickable URL link
+        current_y += tbl_height + int(Pt(12))
+
+    # ── Post-table text ──────────────────────────────────────────────────
+    non_empty_post = [l for l in post_table_lines if l.strip()]
+    if non_empty_post:
+        remaining = int(MAX_CONTENT_Y) - int(current_y)
+        if remaining > int(Pt(30)):
+            est_h = min(int(Pt(int(_est_height_pt(post_table_lines)))), remaining)
+            est_h = max(est_h, int(Pt(30)))
+            box = slide.shapes.add_textbox(
+                CONTENT_LEFT, int(current_y), CONTENT_WIDTH, est_h
+            )
+            box.text_frame.word_wrap = True
+            _render_lines(box.text_frame, post_table_lines)
+
+    # ── Clickable URL link ───────────────────────────────────────────────
     if article.article_url:
         link_box = slide.shapes.add_textbox(
-            Inches(0.8), Inches(7.0), Inches(11.5), Inches(0.4)
+            CONTENT_LEFT, LINK_Y, CONTENT_WIDTH, Inches(0.4)
         )
         link_box.text_frame.word_wrap = True
         p = link_box.text_frame.paragraphs[0]
         run = p.add_run()
         run.text = f"\U0001f517 {article.article_url}"
         run.font.size = Pt(10)
-        run.font.color.rgb = COLOR_TEXT_MUTED
-        run.font.name = "Segoe UI"
-        # Make it a real hyperlink
-        r_elem = run._r
-        hlinkClick = r_elem.makeelement(qn("a:hlinkClick"), {})
-        hlinkClick.set(qn("r:id"), slide.part.relate_to(
-            article.article_url, "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink",
-            is_external=True
-        ))
-        rPr = r_elem.find(qn("a:rPr"))
-        if rPr is None:
-            rPr = r_elem.makeelement(qn("a:rPr"), {})
-            r_elem.insert(0, rPr)
-        rPr.append(hlinkClick)
+        run.font.color.rgb = COLOR_TEXT_LIGHT
+        run.font.name = FONT_PRIMARY
 
     if article.speaker_notes:
         slide.notes_slide.notes_text_frame.text = article.speaker_notes

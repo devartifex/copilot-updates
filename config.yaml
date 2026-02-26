@@ -48,7 +48,7 @@ categories:
     title: "Improvements"
     emoji: "✨"
     dir: "improvements"
-    color: [0x58, 0xA6, 0xFF]   # blue
+    color: [0x44, 0x93, 0xF8]   # blue (GitHub accent)
   deprecation:
     title: "Deprecations"
     emoji: "⚠️"
@@ -100,6 +100,19 @@ display_to_label_slug:
   "PROJECTS & ISSUES": projects-and-issues
   "SUPPLY CHAIN SECURITY": supply-chain-security
   "UNIVERSE '25": universe25
+
+# ── Color Palette (GitHub Primer dark theme) ─────────────────────────────────
+# Source: https://primer.style/foundations/color
+# Each value is an [R, G, B] list (0–255).
+colors:
+  bg_dark:        [0x0D, 0x11, 0x17]    # canvas.default
+  canvas_subtle:  [0x16, 0x1B, 0x22]    # canvas.subtle
+  accent:         [0x44, 0x93, 0xF8]    # accent.fg
+  text_primary:   [0xE6, 0xED, 0xF3]    # fg.default
+  text_light:     [0xC9, 0xD1, 0xD9]    # fg.subtle
+  text_muted:     [0x84, 0x8D, 0x97]    # fg.muted
+  border:         [0x30, 0x36, 0x3D]    # border.default
+  title:          [0x6E, 0x54, 0x94]    # GitHub Butterfly Bush purple
 
 # ── Defaults ─────────────────────────────────────────────────────────────────
 defaults:
