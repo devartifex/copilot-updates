@@ -1,11 +1,11 @@
 ---
 agent: agent
-description: "Summarize a GitHub changelog article of type 'new-release' into structured slide content."
+description: "Summarize a GitHub changelog article of type 'new-releases' into structured slide content."
 ---
 
 # Summarize: New Release
 
-You are summarizing a GitHub changelog article classified as a **new-release**.
+You are summarizing a GitHub changelog article classified as a **new release**.
 
 ## Input
 

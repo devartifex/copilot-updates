@@ -53,9 +53,9 @@ def _build_section_meta(config: dict) -> dict[str, dict]:
     if not categories:
         # Fallback defaults — keeps the script working without config.yaml
         return {
-            "new-release": {"color": RGBColor(0x3F, 0xB9, 0x50), "emoji": "🚀", "title": "New Releases", "dir": "new-releases"},
-            "improvement": {"color": RGBColor(0x58, 0xA6, 0xFF), "emoji": "✨", "title": "Improvements", "dir": "improvements"},
-            "deprecation": {"color": RGBColor(0xF8, 0x54, 0x49), "emoji": "⚠️", "title": "Deprecations", "dir": "deprecations"},
+            "new-releases": {"color": RGBColor(0x3F, 0xB9, 0x50), "emoji": "🚀", "title": "New Releases", "dir": "new-releases"},
+            "improvements": {"color": RGBColor(0x58, 0xA6, 0xFF), "emoji": "✨", "title": "Improvements", "dir": "improvements"},
+            "deprecations": {"color": RGBColor(0xF8, 0x54, 0x49), "emoji": "⚠️", "title": "Deprecations", "dir": "deprecations"},
         }
     meta: dict[str, dict] = {}
     for key, cat in categories.items():
@@ -70,14 +70,18 @@ def _build_section_meta(config: dict) -> dict[str, dict]:
 
 
 def _build_type_aliases(config: dict) -> dict[str, str]:
-    """Build type-alias map from config, with hardcoded fallback."""
+    """Build type-alias map from config, with hardcoded fallback.
+
+    Canonical keys (new-releases, improvements, deprecations) are not
+    listed — the lookup falls back to the raw value when no alias exists.
+    """
     aliases = config.get("type_aliases", {})
     if aliases:
         return {k.lower(): v for k, v in aliases.items()}
     return {
-        "new-releases": "new-release", "new-release": "new-release", "release": "new-release",
-        "improvements": "improvement", "improvement": "improvement",
-        "deprecations": "deprecation", "deprecation": "deprecation", "retired": "deprecation",
+        "new-release": "new-releases", "release": "new-releases",
+        "improvement": "improvements",
+        "deprecation": "deprecations", "retired": "deprecations",
     }
 
 
@@ -127,7 +131,7 @@ FONT_PRIMARY = "Mona Sans"
 
 # Per-section theming (driven by config.yaml)
 SECTION_META: dict[str, dict] = _build_section_meta(_CONFIG)
-SECTION_ORDER = tuple(_CONFIG.get("category_order", ["new-release", "improvement", "deprecation"]))
+SECTION_ORDER = tuple(_CONFIG.get("category_order", ["new-releases", "improvements", "deprecations"]))
 _TYPE_ALIASES: dict[str, str] = _build_type_aliases(_CONFIG)
 
 FALLBACK_IMAGES: dict[str, Path] = {

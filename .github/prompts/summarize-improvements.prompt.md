@@ -1,6 +1,6 @@
 ---
 agent: agent
-description: "Summarize a GitHub changelog article of type 'improvement' into structured slide content."
+description: "Summarize a GitHub changelog article of type 'improvements' into structured slide content."
 ---
 
 # Summarize: Improvement

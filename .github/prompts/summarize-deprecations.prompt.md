@@ -1,6 +1,6 @@
 ---
 agent: agent
-description: "Summarize a GitHub changelog article of type 'deprecation' into structured slide content."
+description: "Summarize a GitHub changelog article of type 'deprecations' into structured slide content."
 ---
 
 # Summarize: Deprecation

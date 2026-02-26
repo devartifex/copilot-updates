@@ -151,7 +151,7 @@ python create_pptx.py --locale it --from-date 2026-02-01 --to-date 2026-02-25
 | `--from-date` | auto-detected | Start date filter |
 | `--to-date` | auto-detected | End date filter |
 | `--label`, `-L` | *(all)* | Comma-separated label slugs to filter by |
-| `--categories`, `-c` | *(all)* | Comma-separated categories: `new-release`, `improvement`, `deprecation` |
+| `--categories`, `-c` | *(all)* | Comma-separated categories: `new-releases`, `improvements`, `deprecations` |
 
 The script reads markdown files from `output/{locale}/{new-releases,improvements,deprecations}/` and produces a widescreen (16:9) `.pptx` with dark GitHub-themed slides:
 
@@ -174,7 +174,7 @@ The script reads markdown files from `output/{locale}/{new-releases,improvements
 ---
 title: "Article Title"
 date: "2026-02-15"
-type: "new-release"
+type: "new-releases"
 labels: ["copilot", "client-apps"]
 image_url: "https://github.blog/wp-content/uploads/..."
 article_url: "https://github.blog/changelog/2026-02-15-slug"

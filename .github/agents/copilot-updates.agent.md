@@ -62,9 +62,9 @@ Read `output/batch.json`. For each article in the `articles` array:
 
 1. **Read** the raw file from the path in `raw_file`.
 2. **Load the template** based on the article `type`:
-   - `new-release` → use `#prompt:summarize-new-release`
-   - `improvement` → use `#prompt:summarize-improvement`
-   - `deprecation` → use `#prompt:summarize-deprecation`
+   - `new-releases` → use `#prompt:summarize-new-releases`
+   - `improvements` → use `#prompt:summarize-improvements`
+   - `deprecations` → use `#prompt:summarize-deprecations`
 3. **Generate** the structured summary + speaker notes following that template exactly.
 4. If `${input:language}` ≠ english, apply `#prompt:translate-content` rules to the generated content.
 5. **Assemble** the final file and write it to the `target_file` path:

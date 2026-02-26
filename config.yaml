@@ -39,17 +39,17 @@ labels:
 # ── Categories (article types) ───────────────────────────────────────────────
 # Maps the canonical type key to display info and output directory name.
 categories:
-  new-release:
+  new-releases:
     title: "New Releases"
     emoji: "🚀"
     dir: "new-releases"
     color: [0x3F, 0xB9, 0x50]   # green
-  improvement:
+  improvements:
     title: "Improvements"
     emoji: "✨"
     dir: "improvements"
     color: [0x44, 0x93, 0xF8]   # blue (GitHub accent)
-  deprecation:
+  deprecations:
     title: "Deprecations"
     emoji: "⚠️"
     dir: "deprecations"
@@ -57,32 +57,31 @@ categories:
 
 # Order in which sections appear in the presentation
 category_order:
-  - new-release
-  - improvement
-  - deprecation
+  - new-releases
+  - improvements
+  - deprecations
 
 # ── Type aliases ─────────────────────────────────────────────────────────────
-# Maps raw type strings from front matter / badge labels to canonical keys.
+# Maps non-canonical raw type strings to the canonical keys
+# (new-releases, improvements, deprecations).  The canonical keys do NOT
+# need to be listed here — the lookup falls back to the raw value.
 type_aliases:
-  new-releases: new-release
-  new-release: new-release
-  release: new-release
-  new: new-release
-  improvements: improvement
-  improvement: improvement
-  deprecations: deprecation
-  deprecation: deprecation
-  retired: deprecation
+  new-release: new-releases
+  release: new-releases
+  new: new-releases
+  improvement: improvements
+  deprecation: deprecations
+  retired: deprecations
 
 # ── Badge text → canonical type ──────────────────────────────────────────────
 # Maps the badge text seen on changelog listing pages (e.g. "RELEASE",
 # "IMPROVEMENT", "RETIRED") to the canonical type key.
 badge_type_map:
-  RELEASE: new-release
-  NEW: new-release
-  IMPROVEMENT: improvement
-  RETIRED: deprecation
-  DEPRECATION: deprecation
+  RELEASE: new-releases
+  NEW: new-releases
+  IMPROVEMENT: improvements
+  RETIRED: deprecations
+  DEPRECATION: deprecations
 
 # ── Display name → label slug ────────────────────────────────────────────────
 # Maps the label display text seen on listing pages to the slug used in URLs.
@@ -117,5 +116,5 @@ colors:
 # ── Defaults ─────────────────────────────────────────────────────────────────
 defaults:
   locale: "en"
-  labels: ["copilot"]          # default label filter for fetching
+  labels: ["all"]              # default label filter for fetching
   output_dir: "output"

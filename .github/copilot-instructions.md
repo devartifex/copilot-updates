@@ -18,9 +18,9 @@ AI summarization happens between steps 2-prepare and 2-validate, using templates
 - `labels` field must be a YAML list: `["copilot", "actions"]`
 - Filenames must match the URL slug: `YYYY-MM-DD-rest-of-slug.md`
 - The `##` heading after the `---` separator must be one of:
-  - `## What's new` (for `new-release`)
-  - `## What changed` (for `improvement`)
-  - `## What's deprecated` (for `deprecation`)
+  - `## What's new` (for `new-releases`)
+  - `## What changed` (for `improvements`)
+  - `## What's deprecated` (for `deprecations`)
 - Speaker notes use `<!-- speaker_notes: ... -->` HTML comment format
 - These headings are parsed by `create_pptx.py` — **never translate them**
 

@@ -98,7 +98,7 @@ def cmd_prepare(output_dir: Path, locale: str,
             continue
 
         date = fm.get("date", "")
-        article_type = _canonical_type(fm.get("type", "improvement"))
+        article_type = _canonical_type(fm.get("type", "improvements"))
         article_labels = fm.get("labels", [])
         if isinstance(article_labels, str):
             article_labels = [article_labels]
@@ -170,9 +170,9 @@ _SPEAKER_NOTES_RE = re.compile(r"<!--\s*\n?\s*speaker_notes:\s*\n(.*?)\s*-->", r
 
 # Expected heading by type
 _TYPE_HEADING = {
-    "new-release": "What's new",
-    "improvement": "What changed",
-    "deprecation": "What's deprecated",
+    "new-releases": "What's new",
+    "improvements": "What changed",
+    "deprecations": "What's deprecated",
 }
 
 _REQUIRED_FM_KEYS = {"title", "date", "type", "labels", "article_url"}
@@ -278,9 +278,9 @@ def cmd_index(output_dir: Path, locale: str) -> None:
     lines: list[str] = [f"# GitHub Changelog Updates: {min_date} - {max_date}", ""]
 
     section_labels = {
-        "new-release": "🚀 New Releases",
-        "improvement": "✨ Improvements",
-        "deprecation": "⚠️ Deprecations",
+        "new-releases": "🚀 New Releases",
+        "improvements": "✨ Improvements",
+        "deprecations": "⚠️ Deprecations",
     }
 
     for cat_key in _CATEGORY_ORDER:

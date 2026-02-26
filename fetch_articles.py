@@ -51,7 +51,7 @@ class ChangelogEntry:
     url: str
     slug: str             # YYYY-MM-DD-rest-of-slug
     date: str             # YYYY-MM-DD
-    type: str             # canonical: new-release | improvement | deprecation
+    type: str             # canonical: new-releases | improvements | deprecations
     labels: list[str] = field(default_factory=list)
 
     def merge_labels(self, other_labels: list[str]) -> None:
@@ -79,6 +79,15 @@ _DATE_FROM_URL = re.compile(r"/changelog/(\d{4}-\d{2}-\d{2})-([\w-]+)")
 
 # Match the type badge text in headings like "### FEB.19RELEASE" or "### FEB.19IMPROVEMENT"
 _BADGE_RE = re.compile(r"[A-Z]{3}\.\d{1,2}(RELEASE|IMPROVEMENT|RETIRED|NEW|DEPRECATION)")
+
+# Maps the type-specific image filename used by GitHub blog to canonical types.
+# Example URL: .../featured-v3-new-releases.svg → new-releases
+_IMAGE_TYPE_MAP = {
+    "new-releases": "new-releases",
+    "improvements": "improvements",
+    "deprecations": "deprecations",
+}
+_IMAGE_TYPE_RE = re.compile(r"featured-v3-(new-releases|improvements|deprecations)\.svg")
 
 
 def _parse_listing_page(html: str, label_slug: str | None, config: dict) -> list[ChangelogEntry]:
@@ -109,21 +118,17 @@ def _parse_listing_page(html: str, label_slug: str | None, config: dict) -> list
         if not title:
             continue
 
-        # Determine article type from surrounding context
-        # Look for badge text in parent/sibling elements
-        article_type = "improvement"  # default fallback
-        parent = link.parent
-        # Walk up to find the heading that contains the type badge
-        for _ in range(5):
-            if parent is None:
-                break
-            text = parent.get_text(" ", strip=True)
-            bm = _BADGE_RE.search(text)
-            if bm:
-                badge_text = bm.group(1)
-                article_type = badge_map.get(badge_text, "improvement")
-                break
-            parent = parent.parent
+        # Determine article type from the closest preceding <h3> badge
+        # heading.  Using get_text("") (no separator) avoids spaces that
+        # break the badge regex when the text is split across child spans.
+        article_type = "improvements"  # default fallback
+        prev_h3 = link.find_previous("h3")
+        if prev_h3:
+            h3_text = prev_h3.get_text("", strip=True).upper()
+            for badge_key, mapped_type in badge_map.items():
+                if badge_key in h3_text:
+                    article_type = mapped_type
+                    break
 
         # Collect all label tags associated with this entry
         article_labels = [label_slug] if label_slug else []
@@ -180,14 +185,25 @@ def _find_next_page(html: str, current_url: str) -> str | None:
 
 # ── Article page parser ──────────────────────────────────────────────────────
 
-def _fetch_article(session: requests.Session, url: str) -> dict:
-    """Fetch an individual article page and extract content."""
+# Badge text values expected on individual article pages.
+_ARTICLE_BADGE_TEXTS = {"RELEASE", "IMPROVEMENT", "RETIRED", "NEW", "DEPRECATION"}
+
+
+def _fetch_article(session: requests.Session, url: str, badge_map: dict) -> dict:
+    """Fetch an individual article page and extract content + type badge.
+
+    *badge_map* is ``config["badge_type_map"]`` — maps badge text like
+    ``"RELEASE"`` to the canonical type key ``"new-releases"``.
+
+    Returns a dict with keys: title, image_url, body, type (or empty str
+    if not detected).
+    """
     try:
         resp = session.get(url, timeout=30)
         resp.raise_for_status()
     except requests.RequestException as e:
         print(f"  ⚠ Failed to fetch {url}: {e}")
-        return {"title": "", "image_url": "", "body": ""}
+        return {"title": "", "image_url": "", "body": "", "type": ""}
 
     soup = BeautifulSoup(resp.text, "lxml")
 
@@ -196,6 +212,25 @@ def _fetch_article(session: requests.Session, url: str) -> dict:
     h1 = soup.find("h1")
     if h1:
         title = h1.get_text(strip=True)
+
+    # ── Extract type badge from the article page ─────────────────────────
+    # GitHub changelog article pages show a badge/label element with text
+    # like "RELEASE", "IMPROVEMENT", etc.  We search <span>, <a>, <div>
+    # elements whose trimmed upper-case text matches a known badge value.
+    article_type = ""
+    for tag in soup.find_all(["span", "a", "div"]):
+        txt = tag.get_text(strip=True).upper()
+        if txt in _ARTICLE_BADGE_TEXTS:
+            article_type = badge_map.get(txt, "")
+            break
+
+    # Fallback: infer type from the hero image URL
+    if not article_type:
+        for img in soup.find_all("img", src=True):
+            img_m = _IMAGE_TYPE_RE.search(img["src"])
+            if img_m:
+                article_type = _IMAGE_TYPE_MAP[img_m.group(1)]
+                break
 
     # Extract hero image
     image_url = ""
@@ -219,21 +254,21 @@ def _fetch_article(session: requests.Session, url: str) -> dict:
         for elem in content_area.find_all(["p", "li", "h2", "h3", "h4", "pre", "blockquote"]):
             text = elem.get_text(strip=True)
             if text:
-                tag = elem.name
-                if tag in ("h2", "h3", "h4"):
-                    body_parts.append(f"\n{'#' * int(tag[1])} {text}\n")
-                elif tag == "li":
+                tag_name = elem.name
+                if tag_name in ("h2", "h3", "h4"):
+                    body_parts.append(f"\n{'#' * int(tag_name[1])} {text}\n")
+                elif tag_name == "li":
                     body_parts.append(f"- {text}")
-                elif tag == "pre":
+                elif tag_name == "pre":
                     body_parts.append(f"```\n{text}\n```")
-                elif tag == "blockquote":
+                elif tag_name == "blockquote":
                     body_parts.append(f"> {text}")
                 else:
                     body_parts.append(text)
 
     body = "\n\n".join(body_parts) if body_parts else ""
 
-    return {"title": title, "image_url": image_url, "body": body}
+    return {"title": title, "image_url": image_url, "body": body, "type": article_type}
 
 
 # ── Raw file writer ──────────────────────────────────────────────────────────
@@ -320,6 +355,15 @@ def fetch_listings(session: requests.Session, labels: list[str] | None,
 
             print(f"   Found {len(page_entries)} entries, {in_range} in date range")
 
+            # Early stop: if all entries on this page are before from_date
+            # the listing is in reverse-chronological order, so older pages
+            # will only contain even older articles.
+            if in_range == 0 and page_entries:
+                latest = max(e.date for e in page_entries)
+                if latest < from_date:
+                    print(f"   ⏹ All entries before {from_date}, stopping pagination for {year}")
+                    break
+
             # Check for next page
             next_url = _find_next_page(resp.text, url)
             if next_url and next_url != url:
@@ -346,7 +390,8 @@ def fetch_listings(session: requests.Session, labels: list[str] | None,
 
 def fetch_and_save_articles(session: requests.Session,
                             entries: dict[str, ChangelogEntry],
-                            output_dir: Path) -> tuple[int, int]:
+                            output_dir: Path,
+                            config: dict) -> tuple[int, int]:
     """Fetch individual article pages and save raw files.
 
     Returns (fetched_count, skipped_count).
@@ -366,7 +411,17 @@ def fetch_and_save_articles(session: requests.Session,
             continue
 
         print(f"  [{i}/{total}] 📥 Fetching: {entry.title[:60]}...")
-        article_data = _fetch_article(session, entry.url)
+        badge_map = config.get("badge_type_map", {})
+        article_data = _fetch_article(session, entry.url, badge_map)
+
+        # Use the type scraped from the article page (authoritative).
+        # Fall back to the listing-page type only when the article page
+        # did not yield a badge.
+        page_type = article_data.get("type", "")
+        if page_type and page_type != entry.type:
+            print(f"       ↻ type corrected: {entry.type} → {page_type}  (from article page)")
+            entry.type = page_type
+
         _save_raw_article(entry, article_data, output_dir)
         fetched += 1
         time.sleep(0.5)  # be polite
@@ -468,7 +523,7 @@ def main():
     print(f"\n{'='*60}")
     print("Step 2: Fetching individual articles...")
     print(f"{'='*60}")
-    fetched, skipped = fetch_and_save_articles(session, entries, output_dir)
+    fetched, skipped = fetch_and_save_articles(session, entries, output_dir, config)
 
     print(f"\n{'='*60}")
     print(f"✅ Done! Fetched: {fetched}, Skipped (existing): {skipped}")
