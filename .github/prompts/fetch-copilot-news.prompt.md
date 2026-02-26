@@ -1,5 +1,5 @@
 ---
-mode: 'agent'
+agent: 'agent'
 tools: ['web/fetch', 'edit', 'read', 'search']
 description: 'Fetch GitHub Copilot changelog articles and create structured markdown files for PowerPoint conversion'
 ---
