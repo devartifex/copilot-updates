@@ -971,6 +971,8 @@ def main():
         name_parts = ["github-updates"]
         if label_filter and len(label_filter) <= 2:
             name_parts.extend(label_filter)
+        if args.locale and args.locale != "en":
+            name_parts.append(args.locale)
         name_parts.append(f"{start}-to-{end}")
         output_path = "-".join(name_parts) + ".pptx"
 
