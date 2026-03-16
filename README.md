@@ -14,6 +14,63 @@ Fetch articles for any label (Copilot, Actions, Security, and more), generate st
 
 ---
 
+## 🎯 The Opportunity
+
+GitHub ships product updates **every single week** — across Copilot, Actions, Security, and more.
+
+For any team that tracks these changes, the same recurring challenge surfaces: **how do you stay on top of everything, and share what matters with your audience in a meaningful way?**
+
+Today, the answer is usually manual:
+
+- Someone reads through dozens of changelog articles
+- Picks what's relevant for their team or audience
+- Writes summaries, formats slides, repeats this every week
+
+**That's hours of low-leverage work — done by people who should be doing something harder.**
+
+---
+
+## ✨ The Solution
+
+This repository is a **working AI pipeline** that takes GitHub changelog articles as input and produces a **polished, multilingual PowerPoint presentation** as output — automatically.
+
+```
+github.blog/changelog
+        │
+        ▼
+  fetch_articles.py        ← scrapes raw changelog articles
+        │
+        ▼
+  process_articles.py      ← prepares batches, validates output
+        │
+        ▼
+  GitHub Copilot Agent     ← reads each article, writes structured summaries + speaker notes
+        │
+        ▼
+  create_pptx.py           ← assembles the final .pptx, dark-themed, 16:9, ready to present
+        │
+        ▼
+  presentation.pptx  🎉
+```
+
+One command. A few minutes. Done.
+
+> The Copilot agent orchestrates the entire pipeline end-to-end — from fetch to finished slides.
+
+---
+
+## ⏱️ Time Saved
+
+| Task | Without AI | With this pipeline |
+|---|---|---|
+| Reading & filtering changelog articles | ~60 min/week | ~0 min — automated |
+| Writing summaries per article | ~5 min each | ~0 min — Copilot writes them |
+| Translating for local teams | ~2 hrs/language | ~0 min — any language on demand |
+| Formatting slides | ~30 min/session | ~0 min — generated automatically |
+| **Total per weekly briefing** | **~3–4 hours** | **< 5 minutes** |
+
+---
+
 ## Table of Contents
 
 - [How It Works](#-how-it-works)
