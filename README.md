@@ -81,7 +81,7 @@ Every generated presentation uses a **dark GitHub-themed design** (16:9 widescre
 | ![Article hero](imgs/slides/example-article-hero.png) | ![Summary slide](imgs/slides/example-summary.png) |
 | Article title with hero image and date | Structured content with clickable source link and speaker notes |
 
-> Summaries and speaker notes can be generated in **any language** — the example above shows Italian. Article titles and technical terms always stay in English.
+> Summaries and speaker notes can be generated in **any language**. Article titles and technical terms always stay in English.
 
 ---
 
