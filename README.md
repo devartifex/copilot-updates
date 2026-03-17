@@ -1,16 +1,48 @@
 <div align="center">
 
-# GitHub Changelog → PowerPoint
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.githubassets.com/assets/GitHub-Logo-White-2d9e9c2.png" width="200">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.githubassets.com/assets/GitHub-Logo-ee39423.png" width="200">
+  <img alt="GitHub" src="https://github.githubassets.com/assets/GitHub-Logo-ee39423.png" width="200">
+</picture>
+
+<br/>
+
+# Copilot Updates
 
 **Turn GitHub changelog articles into polished, presentation-ready slides — automatically.**
+
+<br/>
 
 [![Built with GitHub Copilot](https://img.shields.io/badge/Built_with-GitHub_Copilot-8957e5?style=for-the-badge&logo=githubcopilot&logoColor=white)](https://github.com/features/copilot)
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776ab?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
 
-</div>
+<br/>
+
+[![GitHub stars](https://img.shields.io/github/stars/g-mercuri/copilot-updates?style=flat-square&logo=github&label=Stars)](https://github.com/g-mercuri/copilot-updates/stargazers)
+[![GitHub last commit](https://img.shields.io/github/last-commit/g-mercuri/copilot-updates?style=flat-square&logo=github&label=Last%20Commit)](https://github.com/g-mercuri/copilot-updates/commits)
+[![GitHub issues](https://img.shields.io/github/issues/g-mercuri/copilot-updates?style=flat-square&logo=github&label=Issues)](https://github.com/g-mercuri/copilot-updates/issues)
 
 ---
+
+*Fetch · Summarize · Translate · Present — in under 5 minutes.*
+
+</div>
+
+<br/>
+
+<p align="center">
+  <a href="#-the-opportunity">Why</a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-how-it-works">How</a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-example-output">Demo</a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-getting-started">Quick Start</a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-usage">Usage</a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#%EF%B8%8F-configuration">Config</a>&nbsp;&nbsp;·&nbsp;&nbsp;
+  <a href="#-contributing">Contribute</a>
+</p>
+
+<br/>
 
 ## 🎯 The Opportunity
 
@@ -20,68 +52,122 @@ For any team that tracks these changes, the same recurring challenge surfaces: *
 
 Today, the answer is usually manual:
 
-- Someone reads through dozens of changelog articles
-- Picks what's relevant for their team or audience
-- Writes summaries, formats slides, repeats this every week
+- 📰 Someone reads through dozens of changelog articles
+- 🔍 Picks what's relevant for their team or audience
+- ✍️ Writes summaries, formats slides, repeats this every week
 
 **That's hours of low-leverage work — done by people who should be doing something harder.**
 
----
+<br/>
 
-## ✨ The Solution
+## ✨ How It Works
 
-This repository is a **working AI pipeline** that takes GitHub changelog articles as input and produces a **polished, multilingual PowerPoint presentation** as output — automatically.
+This repository is a **working AI pipeline** powered by a **Copilot agent that orchestrates everything** — it calls Python scripts for deterministic work (scraping, validation, indexing, slide generation) and uses AI only for what requires it: writing structured summaries and speaker notes. The result is a **polished, multilingual PowerPoint presentation** — automatically.
+
+<table>
+<tr>
+<td width="60%">
 
 ```
-github.blog/changelog
-        │
-        ▼
-  fetch_articles.py        ← scrapes raw changelog articles
-        │
-        ▼
-  process_articles.py      ← prepares batches, validates output
-        │
-        ▼
-  GitHub Copilot Agent     ← reads each article, writes structured summaries + speaker notes
-        │
-        ▼
-  create_pptx.py           ← assembles the final .pptx, dark-themed, 16:9, ready to present
-        │
-        ▼
-  presentation.pptx  🎉
+  ┌──────────────────────────────────────┐
+  │        Copilot Agent 🤖              │
+  │        (orchestrator)                │
+  │                                      │
+  │  1. fetch_articles.py                │
+  │     └─ scrape github.blog/changelog  │
+  │                                      │
+  │  2. process_articles.py --prepare    │
+  │     └─ plan batch from raw articles  │
+  │                                      │
+  │  3. AI summarization                 │
+  │     └─ generate summaries + notes    │
+  │                                      │
+  │  4. process_articles.py --validate   │
+  │     └─ check output format           │
+  │                                      │
+  │  5. process_articles.py --index      │
+  │     └─ build index.md                │
+  │                                      │
+  │  6. create_pptx.py                   │
+  │     └─ assemble final slides         │
+  └──────────────┬───────────────────────┘
+                 ▼
+          📊 presentation.pptx
 ```
 
-One command. A few minutes. Done.
+</td>
+<td>
 
----
+### ⏱️ Time saved per week
 
-## ⏱️ Time Saved
+| Task | Before | After |
+|:---|:---:|:---:|
+| Read & filter articles | ~60 min | **0** |
+| Write summaries | ~5 min × N | **0** |
+| Translate content | ~2 hrs/lang | **0** |
+| Format slides | ~30 min | **0** |
+| **Total** | **3–4 hrs** | **< 5 min** |
 
-| Task | Without AI | With this pipeline |
-|---|---|---|
-| Reading & filtering changelog articles | ~60 min/week | ~0 min — automated |
-| Writing summaries per article | ~5 min each | ~0 min — Copilot writes them |
-| Translating for local teams | ~2 hrs/language | ~0 min — any language on demand |
-| Formatting slides | ~30 min/session | ~0 min — generated automatically |
-| **Total per weekly briefing** | **~3–4 hours** | **< 5 minutes** |
+</td>
+</tr>
+</table>
 
----
+> [!NOTE]
+> The Copilot agent drives the entire pipeline — you just provide dates, labels, and language. It handles the six steps end-to-end.
+
+<br/>
 
 ## 📸 Example Output
 
 Every generated presentation uses a **dark GitHub-themed design** (16:9 widescreen) with four slide types:
 
-| Title slide | Section divider |
-|:---:|:---:|
-| ![Title slide](imgs/slides/example-title.png) | ![Section divider](imgs/slides/example-section-divider.png) |
-| Date range, active label filters, and source | Category header with article count |
+<table>
+<tr>
+<td align="center" width="50%">
 
-| Article hero | Summary |
-|:---:|:---:|
-| ![Article hero](imgs/slides/example-article-hero.png) | ![Summary slide](imgs/slides/example-summary.png) |
-| Article title with hero image and date | Structured content with clickable source link and speaker notes |
+**Title Slide**
 
+<img src="imgs/slides/example-title.png" alt="Title slide" width="100%"/>
+
+<sub>Date range, active label filters, and source</sub>
+
+</td>
+<td align="center" width="50%">
+
+**Section Divider**
+
+<img src="imgs/slides/example-section-divider.png" alt="Section divider" width="100%"/>
+
+<sub>Category header with article count</sub>
+
+</td>
+</tr>
+<tr>
+<td align="center">
+
+**Article Hero**
+
+<img src="imgs/slides/example-article-hero.png" alt="Article hero slide" width="100%"/>
+
+<sub>Article title with hero image and date</sub>
+
+</td>
+<td align="center">
+
+**Summary**
+
+<img src="imgs/slides/example-summary.png" alt="Summary slide" width="100%"/>
+
+<sub>Structured content with source link & speaker notes</sub>
+
+</td>
+</tr>
+</table>
+
+> [!TIP]
 > Summaries and speaker notes can be generated in **any language**. Article titles and technical terms always stay in English.
+
+<p align="right"><a href="#changelog--powerpoint">⬆ back to top</a></p>
 
 ---
 
@@ -89,8 +175,10 @@ Every generated presentation uses a **dark GitHub-themed design** (16:9 widescre
 
 ### Prerequisites
 
-- [Python 3.11+](https://www.python.org)
-- [VS Code](https://code.visualstudio.com/) with [GitHub Copilot](https://github.com/features/copilot) *(for agent mode — optional for CLI usage)*
+| Requirement | Notes |
+|:---|:---|
+| [Python 3.11+](https://www.python.org) | Core runtime |
+| [VS Code](https://code.visualstudio.com/) + [GitHub Copilot](https://github.com/features/copilot) | For agent mode *(optional for CLI usage)* |
 
 ### Installation
 
@@ -99,7 +187,9 @@ uv sync
 ```
 
 <details>
-<summary><strong>Alternative: plain venv / pip</strong></summary>
+<summary>💡 <strong>Alternative: plain venv / pip</strong></summary>
+
+<br/>
 
 ```bash
 python -m venv .venv
@@ -110,32 +200,48 @@ pip install .
 
 </details>
 
+<p align="right"><a href="#changelog--powerpoint">⬆ back to top</a></p>
+
 ---
 
 ## 📖 Usage
 
-### Option A — Copilot Agent ✨ (recommended)
+### Option A — Copilot Agent ✨ <sub>(recommended)</sub>
+
+<table>
+<tr>
+<td>
 
 #### VS Code
 
-Open VS Code Copilot Chat in **Agent mode**, then select **`copilot-updates`** from the agent dropdown (custom agents defined in `.github/agents/` appear there automatically).
+Open Copilot Chat in **Agent mode**, then select **`copilot-updates`** from the agent dropdown.
+
+</td>
+<td>
+
+#### Copilot CLI
+
+Just ask in natural language:
+
+```
+Run the copilot-updates pipeline
+for copilot articles
+from 2026-02-01 to 2026-02-25
+in italian
+```
+
+</td>
+</tr>
+</table>
 
 You'll be prompted for:
 
-| Input | Example |
-|---|---|
-| `startDate` | `2026-02-01` |
-| `endDate` | `2026-02-25` |
-| `labels` | `copilot,actions` or `all` |
-| `language` | `italian`, `english`, `spanish`, ... |
-
-#### GitHub Copilot CLI
-
-With the [GitHub Copilot CLI](https://githubnext.com/projects/copilot-cli), the agent is available as a built-in skill. Just ask:
-
-```
-Run the copilot-updates pipeline for copilot articles from 2026-02-01 to 2026-02-25 in italian
-```
+| Input | Example | Description |
+|:---|:---|:---|
+| `startDate` | `2026-02-01` | Start of the date range |
+| `endDate` | `2026-02-25` | End of the date range |
+| `labels` | `copilot,actions` or `all` | Which changelog labels to include |
+| `language` | `italian`, `english`, `spanish` | Output language for summaries |
 
 The agent orchestrates the full pipeline end-to-end:
 
@@ -146,18 +252,21 @@ Fetch → Prepare → Summarize → Validate → Index → PowerPoint
 > [!TIP]
 > Re-running for the same date range is safe — both the scraper and the agent skip articles that already have output files.
 
----
+<br/>
 
 ### Option B — Manual CLI
 
-#### 1. Fetch raw articles
+<details open>
+<summary><strong>1️⃣ Fetch raw articles</strong></summary>
+
+<br/>
 
 ```bash
 python fetch_articles.py --labels copilot --from-date 2026-02-01 --to-date 2026-02-25
 ```
 
 <details>
-<summary><strong>More examples & flags</strong></summary>
+<summary>More examples & flags</summary>
 
 ```bash
 # Multiple labels
@@ -168,7 +277,7 @@ python fetch_articles.py --labels all --from-date 2026-02-01 --to-date 2026-02-2
 ```
 
 | Flag | Default | Description |
-|---|---|---|
+|:---|:---|:---|
 | `--labels`, `-L` | `copilot` | Comma-separated label slugs, or `all` |
 | `--from-date` | *required* | Start date (YYYY-MM-DD) |
 | `--to-date` | *required* | End date (YYYY-MM-DD) |
@@ -176,7 +285,12 @@ python fetch_articles.py --labels all --from-date 2026-02-01 --to-date 2026-02-2
 
 </details>
 
-#### 2. Process articles
+</details>
+
+<details open>
+<summary><strong>2️⃣ Process articles</strong></summary>
+
+<br/>
 
 ```bash
 python process_articles.py --prepare --validate --index --locale en \
@@ -186,10 +300,10 @@ python process_articles.py --prepare --validate --index --locale en \
 > Between `--prepare` and `--validate`, run the Copilot agent (or write summaries manually) to generate the structured article files.
 
 <details>
-<summary><strong>Flags</strong></summary>
+<summary>Flags</summary>
 
 | Flag | Default | Description |
-|---|---|---|
+|:---|:---|:---|
 | `--prepare` | — | Scan raw files and produce `output/batch.json` |
 | `--validate` | — | Validate processed article files |
 | `--index` | — | Generate/update `index.md` |
@@ -201,14 +315,19 @@ python process_articles.py --prepare --validate --index --locale en \
 
 </details>
 
-#### 3. Generate the PowerPoint
+</details>
+
+<details open>
+<summary><strong>3️⃣ Generate the PowerPoint</strong></summary>
+
+<br/>
 
 ```bash
 python create_pptx.py --locale it --from-date 2026-02-01 --to-date 2026-02-25
 ```
 
 <details>
-<summary><strong>More examples & flags</strong></summary>
+<summary>More examples & flags</summary>
 
 ```bash
 python create_pptx.py --label copilot
@@ -216,7 +335,7 @@ python create_pptx.py --label copilot,actions --categories new-release,improveme
 ```
 
 | Flag | Default | Description |
-|---|---|---|
+|:---|:---|:---|
 | `--output-dir`, `-d` | `output/` | Root directory containing locale subfolders |
 | `--locale`, `-l` | `en` | Locale subfolder to read from |
 | `--output`, `-o` | auto-generated | Output `.pptx` filename |
@@ -227,17 +346,23 @@ python create_pptx.py --label copilot,actions --categories new-release,improveme
 
 </details>
 
+</details>
+
+<p align="right"><a href="#changelog--powerpoint">⬆ back to top</a></p>
+
 ---
 
 ## ⚙️ Configuration
 
-All labels, categories, colors, and defaults live in [`config.yaml`](config.yaml). Supports all 13 GitHub changelog labels including `copilot`, `actions`, `application-security`, `client-apps`, and more.
+All labels, categories, colors, and defaults live in [`config.yaml`](config.yaml).
 
 <details>
-<summary><strong>Supported labels</strong></summary>
+<summary>📋 <strong>Supported labels</strong> <sub>(13 labels)</sub></summary>
+
+<br/>
 
 | Slug | Display Name |
-|---|---|
+|:---|:---|
 | `account-management` | Account Management |
 | `actions` | Actions |
 | `application-security` | Application Security |
@@ -255,7 +380,9 @@ All labels, categories, colors, and defaults live in [`config.yaml`](config.yaml
 </details>
 
 <details>
-<summary><strong>Article format</strong></summary>
+<summary>📄 <strong>Article format</strong></summary>
+
+<br/>
 
 Each processed article follows this markdown structure:
 
@@ -296,6 +423,8 @@ The `##` heading varies by type: `What's new` (new-releases), `What changed` (im
 
 </details>
 
+<p align="right"><a href="#changelog--powerpoint">⬆ back to top</a></p>
+
 ---
 
 ## 📂 Project Structure
@@ -325,12 +454,17 @@ copilot-updates/
 
 ## 🤝 Contributing
 
+Contributions are welcome! Here's how to get started:
+
 1. **Fork** the repository
 2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
 3. **Commit** your changes
 4. **Open** a Pull Request
 
+> [!IMPORTANT]
 > When adding new categories or labels, update `config.yaml` — all scripts read it at startup.
+
+<p align="right"><a href="#changelog--powerpoint">⬆ back to top</a></p>
 
 ---
 
@@ -342,6 +476,8 @@ Built entirely with [GitHub Copilot](https://github.com/features/copilot).
 
 ---
 
-## 📄 License
+<div align="center">
 
-[MIT License](LICENSE)
+**[MIT License](LICENSE)** · Made with ❤️ and 🤖
+
+</div>
