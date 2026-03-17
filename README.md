@@ -116,11 +116,9 @@ pip install .
 
 ### Option A — Copilot Agent ✨ (recommended)
 
-Open VS Code Copilot Chat in **Agent mode** and invoke:
+#### VS Code
 
-```
-@copilot-updates
-```
+Open VS Code Copilot Chat in **Agent mode**, then select **`copilot-updates`** from the agent dropdown (custom agents defined in `.github/agents/` appear there automatically).
 
 You'll be prompted for:
 
@@ -130,6 +128,14 @@ You'll be prompted for:
 | `endDate` | `2026-02-25` |
 | `labels` | `copilot,actions` or `all` |
 | `language` | `italian`, `english`, `spanish`, ... |
+
+#### GitHub Copilot CLI
+
+With the [GitHub Copilot CLI](https://githubnext.com/projects/copilot-cli), the agent is available as a built-in skill. Just ask:
+
+```
+Run the copilot-updates pipeline for copilot articles from 2026-02-01 to 2026-02-25 in italian
+```
 
 The agent orchestrates the full pipeline end-to-end:
 
