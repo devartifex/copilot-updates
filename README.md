@@ -1,11 +1,5 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.githubassets.com/assets/GitHub-Logo-White-2d9e9c2.png" width="200">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.githubassets.com/assets/GitHub-Logo-ee39423.png" width="200">
-  <img alt="GitHub" src="https://github.githubassets.com/assets/GitHub-Logo-ee39423.png" width="200">
-</picture>
-
 <br/>
 
 # Copilot Updates
