@@ -56,7 +56,7 @@ Today, the answer is usually manual:
 
 ## ✨ How It Works
 
-This repository is a **working AI pipeline** powered by a **Copilot agent that orchestrates everything** — it calls Python scripts for deterministic work (scraping, validation, indexing, slide generation) and uses AI only for what requires it: writing structured summaries and speaker notes. The result is a **polished, multilingual PowerPoint presentation** — automatically.
+This repository is a **working AI pipeline** powered by a **repo-local Copilot skill that orchestrates everything** — it calls Python scripts for deterministic work (scraping, validation, indexing, slide generation) and uses AI only for what requires it: writing structured summaries and speaker notes. The result is a **polished, multilingual PowerPoint presentation** — automatically.
 
 <table>
 <tr>
@@ -64,7 +64,7 @@ This repository is a **working AI pipeline** powered by a **Copilot agent that o
 
 ```
   ┌──────────────────────────────────────┐
-  │        Copilot Agent 🤖              │
+  │        Copilot Skill 🤖              │
   │        (orchestrator)                │
   │                                      │
   │  1. fetch_articles.py                │
@@ -107,7 +107,7 @@ This repository is a **working AI pipeline** powered by a **Copilot agent that o
 </table>
 
 > [!NOTE]
-> The Copilot agent drives the entire pipeline — you just provide dates, labels, and language. It handles the six steps end-to-end.
+> The Copilot skill is **repo-local**: it works in this repository because it wraps the scripts, config, references, and output structure that already live here. The skill supplies workflow knowledge; the Python scripts still do the heavy lifting.
 
 <br/>
 
@@ -172,7 +172,7 @@ Every generated presentation uses a **dark GitHub-themed design** (16:9 widescre
 | Requirement | Notes |
 |:---|:---|
 | [Python 3.11+](https://www.python.org) | Core runtime |
-| [VS Code](https://code.visualstudio.com/) + [GitHub Copilot](https://github.com/features/copilot) | For agent mode *(optional for CLI usage)* |
+| [VS Code](https://code.visualstudio.com/) + [GitHub Copilot](https://github.com/features/copilot) | Optional for chat-based usage |
 
 ### Installation
 
@@ -200,7 +200,7 @@ pip install .
 
 ## 📖 Usage
 
-### Option A — Copilot Agent ✨ <sub>(recommended)</sub>
+### Option A — Copilot Skill ✨ <sub>(recommended)</sub>
 
 <table>
 <tr>
@@ -208,14 +208,16 @@ pip install .
 
 #### VS Code
 
-Open Copilot Chat in **Agent mode**, then select **`copilot-updates`** from the agent dropdown.
+Open Copilot Chat in this repository and ask Copilot to use the **`/copilot-updates`** skill.
 
 </td>
 <td>
 
 #### Copilot CLI
 
-Just ask in natural language:
+This repository now ships an auto-discovered skill at `.github/skills/copilot-updates/SKILL.md`.
+
+You can ask in natural language, or invoke it explicitly:
 
 ```
 Run the copilot-updates pipeline
@@ -224,9 +226,18 @@ from 2026-02-01 to 2026-02-25
 in italian
 ```
 
+```text
+Use the /copilot-updates skill to create a weekly GitHub changelog presentation
+for copilot,actions
+from 2026-02-01 to 2026-02-25
+in italian
+```
+
 </td>
 </tr>
 </table>
+
+In Copilot CLI, use `/skills list` to confirm the skill is available and `/skills reload` after editing files under `.github/skills/`.
 
 You'll be prompted for:
 
@@ -237,14 +248,20 @@ You'll be prompted for:
 | `labels` | `copilot,actions` or `all` | Which changelog labels to include |
 | `language` | `italian`, `english`, `spanish` | Output language for summaries |
 
-The agent orchestrates the full pipeline end-to-end:
+The skill orchestrates the full pipeline end-to-end:
 
 ```
 Fetch → Prepare → Summarize → Validate → Index → PowerPoint
 ```
 
+In practice, the important boundary is:
+
+- `fetch_articles.py`, `process_articles.py`, and `create_pptx.py` do the deterministic work
+- the skill reads `output/batch.json`, writes each processed article file under `output/{locale}/...`, and then resumes the scripted pipeline
+- before validation, every `target_file` in `output/batch.json` should exist on disk
+
 > [!TIP]
-> Re-running for the same date range is safe — both the scraper and the agent skip articles that already have output files.
+> Re-running for the same date range is safe — both the scraper and the skill skip articles that already have output files.
 
 <br/>
 
@@ -287,11 +304,24 @@ python fetch_articles.py --labels all --from-date 2026-02-01 --to-date 2026-02-2
 <br/>
 
 ```bash
-python process_articles.py --prepare --validate --index --locale en \
+python process_articles.py --prepare --locale en \
   --from-date 2026-02-01 --to-date 2026-02-25
 ```
 
-> Between `--prepare` and `--validate`, run the Copilot agent (or write summaries manually) to generate the structured article files.
+> Between `--prepare` and `--validate`, run the Copilot skill (or write summaries manually) to generate the structured article files.
+
+Then verify that every `target_file` listed in `output/batch.json` exists, and continue:
+
+```bash
+python process_articles.py --validate --locale en
+python process_articles.py --index --locale en
+```
+
+> [!TIP]
+> `--prepare` only builds `output/batch.json`. It does **not** generate translated summaries by itself.
+
+> [!TIP]
+> If you write summaries manually, assemble the full file: front matter, `#` title, optional `![hero](...)`, `---`, then the structured body. Validation may pass even if a file is missing from the expected date range, so it is worth checking the batch manifest before generating the deck.
 
 <details>
 <summary>Flags</summary>
@@ -426,9 +456,12 @@ The `##` heading varies by type: `What's new` (new-releases), `What changed` (im
 ```
 copilot-updates/
 ├── .github/
-│   ├── agents/
-│   │   └── copilot-updates.agent.md       # Copilot agent — 6-step orchestration
-│   └── prompts/                           # AI summarization prompt templates
+│   ├── skills/
+│   │   ├── copilot-updates/
+│   │   │   ├── SKILL.md                   # Auto-discovered Copilot CLI skill
+│   │   │   └── references/                # Skill-local summarization rules
+│   │   └── make-skill-template/
+│   │       └── SKILL.md                   # Downloaded skill template reference
 ├── imgs/                                  # Fallback hero images + slide examples
 ├── output/                                # Generated artifacts (git-ignored)
 │   ├── raw/                               # Scraped raw articles (language-independent)
