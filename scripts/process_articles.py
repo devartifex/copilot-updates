@@ -178,6 +178,37 @@ _TYPE_HEADING = {
 _REQUIRED_FM_KEYS = {"title", "date", "type", "labels", "article_url"}
 
 
+def _load_expected_batch_targets(output_dir: Path, locale: str) -> tuple[list[Path], list[str]]:
+    """Return expected target files from batch.json for the given locale.
+
+    If batch.json is missing, malformed, or for a different locale, return an
+    empty target list and any parsing errors encountered.
+    """
+    batch_path = output_dir / "batch.json"
+    if not batch_path.exists():
+        return [], []
+
+    try:
+        data = json.loads(batch_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return [], [f"{batch_path.name}: unreadable batch manifest ({exc})"]
+
+    if data.get("locale") != locale:
+        return [], []
+
+    expected_targets: list[Path] = []
+    errors: list[str] = []
+    for article in data.get("articles", []):
+        target = article.get("target_file")
+        if not isinstance(target, str) or not target.strip():
+            slug = article.get("slug", "<unknown>")
+            errors.append(f"{batch_path.name}: article '{slug}' is missing a valid target_file")
+            continue
+        expected_targets.append(Path(target))
+
+    return expected_targets, errors
+
+
 def cmd_validate(output_dir: Path, locale: str) -> bool:
     """Validate all processed article files. Returns True if all pass."""
     locale_dir = output_dir / locale
@@ -187,6 +218,16 @@ def cmd_validate(output_dir: Path, locale: str) -> bool:
 
     errors: list[str] = []
     checked = 0
+
+    expected_targets, batch_errors = _load_expected_batch_targets(output_dir, locale)
+    errors.extend(batch_errors)
+    for target in expected_targets:
+        if not target.exists():
+            try:
+                rel = target.relative_to(output_dir)
+            except ValueError:
+                rel = target
+            errors.append(f"{rel}: expected from batch.json but file is missing")
 
     for cat_key, cat_meta in _CATEGORIES.items():
         cat_dir = locale_dir / cat_meta["dir"]

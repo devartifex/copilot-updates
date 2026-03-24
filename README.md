@@ -108,6 +108,8 @@ This repository is a **working AI pipeline** powered by a **repo-local Copilot s
 
 > [!NOTE]
 > This repository **is** the skill. Clone or symlink it to `~/.copilot/skills/copilot-updates/` to use it from any project. The skill supplies workflow knowledge; the Python scripts in `scripts/` do the heavy lifting.
+>
+> **Important:** generated artifacts are written to the **current working directory where you invoke the skill**, not to the skill folder itself. That means the skill will create `output/` and `.pptx` files in the project or folder you are currently working in.
 
 <br/>
 
@@ -174,7 +176,39 @@ Every generated presentation uses a **dark GitHub-themed design** (16:9 widescre
 | [Python 3.11+](https://www.python.org) | Core runtime |
 | [VS Code](https://code.visualstudio.com/) + [GitHub Copilot](https://github.com/features/copilot) | Optional for chat-based usage |
 
-### Install as a global Copilot skill
+### Choose how you want to use the skill
+
+You can use `copilot-updates` in **two different ways**:
+
+#### Option 1 — Use it inside the cloned repository
+
+Use this mode when you want to work directly in this repo.
+
+- Clone the repository anywhere you like
+- Open Copilot in this repository
+- Run the pipeline from this repository root
+
+In this mode, generated files are written inside this repo's working folder:
+
+- `.\output\raw\`
+- `.\output\{locale}\...`
+- generated `.pptx` files in the repo root
+
+#### Option 2 — Use it from outside the repository
+
+Use this mode when you want the skill available from **any project folder**.
+
+- Keep one clone of this repo somewhere on disk
+- Register that clone under your user skills folder
+- Invoke the skill while working in another folder or project
+
+In this mode, generated files are written to **the folder where you invoke the skill**, not to the repo that contains the skill:
+
+- `C:\work\demo\output\raw\`
+- `C:\work\demo\output\{locale}\...`
+- generated `.pptx` files in `C:\work\demo\`
+
+### Configure Option 2 — install as a global Copilot skill
 
 ```bash
 # Clone to your user skills directory
@@ -190,6 +224,8 @@ New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.copilot\skills\copilot-
 ```
 
 ### Install Python dependencies
+
+Run this once for the clone that contains the skill scripts:
 
 ```bash
 cd scripts
@@ -225,7 +261,9 @@ pip install .
 
 #### VS Code
 
-Open Copilot Chat in this repository and ask Copilot to use the **`/copilot-updates`** skill.
+If you are using **Option 1**, open Copilot Chat in this repository and ask Copilot to use the **`/copilot-updates`** skill.
+
+If you are using **Option 2**, open Copilot in the project folder where you want the output to be created, and then invoke the skill there.
 
 </td>
 <td>
@@ -233,6 +271,9 @@ Open Copilot Chat in this repository and ask Copilot to use the **`/copilot-upda
 #### Copilot CLI
 
 This repository is a self-contained Copilot skill (`SKILL.md` at the root).
+
+- **Option 1:** run Copilot from this repo root if you want output written here
+- **Option 2:** run Copilot from another folder if you want output written there
 
 You can ask in natural language, or invoke it explicitly:
 
@@ -255,6 +296,11 @@ in italian
 </table>
 
 In Copilot CLI, use `/skills list` to confirm the skill is available and `/skills reload` after editing skill files.
+
+> [!WARNING]
+> Check which folder you are currently in **before** invoking the skill. The pipeline writes `output/raw/`, `output/{locale}/...`, and the generated `.pptx` to your **current working directory**.
+>
+> Example: if you run Copilot from `C:\work\demo`, the skill writes files under `C:\work\demo\output\...` and creates the presentation there.
 
 You'll be prompted for:
 
