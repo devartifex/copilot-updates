@@ -6,7 +6,7 @@ license: MIT
 
 # Copilot Updates
 
-Use this skill to run the repository's changelog-to-presentation workflow end to end. This skill should orchestrate the existing Python scripts for deterministic work and use AI only for structured summaries and speaker notes.
+Use this skill to run the changelog-to-presentation workflow end to end. This skill should orchestrate the existing Python scripts for deterministic work and use AI only for structured summaries and speaker notes.
 
 ## When to Use This Skill
 
@@ -16,9 +16,58 @@ Use this skill to run the repository's changelog-to-presentation workflow end to
 - The user wants translated summaries or speaker notes for a specific language
 - The user wants to rerun or update the existing changelog presentation pipeline
 
+## Prerequisites
+
+### Python dependencies
+
+The skill's Python scripts require Python 3.11+ and several packages. Install them:
+
+```bash
+cd <skill-root>/scripts
+pip install -e .
+# or, if using uv:
+uv sync
+```
+
+### Installation as a global user skill
+
+Clone or symlink this repository to your Copilot skills directory so it's available from any project:
+
+```bash
+# Clone directly
+git clone https://github.com/<owner>/copilot-updates ~/.copilot/skills/copilot-updates
+
+# Or symlink an existing clone
+ln -s /path/to/copilot-updates ~/.copilot/skills/copilot-updates
+```
+
+On Windows:
+```powershell
+# Symlink
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.copilot\skills\copilot-updates" -Target "C:\path\to\copilot-updates"
+```
+
+Once installed, Copilot will discover the skill automatically when you ask about GitHub changelog updates or presentations.
+
+### Installation as a project-level skill
+
+Clone into your repository's `.github/skills/` directory:
+
+```bash
+git clone https://github.com/<owner>/copilot-updates .github/skills/copilot-updates
+```
+
+## Script Resolution
+
+All Python scripts live in the `scripts/` subdirectory of this skill. When running commands, resolve script paths relative to the skill's root directory.
+
+If the skill is installed at `~/.copilot/skills/copilot-updates/`, the scripts are at `~/.copilot/skills/copilot-updates/scripts/`. The scripts use `SCRIPT_DIR = Path(__file__).resolve().parent` internally, so they find their own config and image assets regardless of the working directory.
+
+Output (the `output/` directory and `.pptx` files) is always created in the **current working directory**, not in the skill folder.
+
 ## Core Principles
 
-- Always use the repository's Python scripts for deterministic tasks
+- Always use the skill's Python scripts in `scripts/` for deterministic tasks
 - Never create raw files manually
 - Never write `index.md` manually
 - Never invent article metadata that should come from `output/batch.json`
@@ -56,8 +105,8 @@ Map language names to locale codes using this table:
 Run the scraper first. If the label filter is `all`, omit the `--labels` flag.
 
 ```bash
-python fetch_articles.py --from-date <startDate> --to-date <endDate>
-python fetch_articles.py --labels <labels> --from-date <startDate> --to-date <endDate>
+python scripts/fetch_articles.py --from-date <startDate> --to-date <endDate>
+python scripts/fetch_articles.py --labels <labels> --from-date <startDate> --to-date <endDate>
 ```
 
 This writes raw markdown files to `output/raw/`.
@@ -67,7 +116,7 @@ This writes raw markdown files to `output/raw/`.
 Run the deterministic planning step to produce `output/batch.json`.
 
 ```bash
-python process_articles.py --prepare --locale <locale> --from-date <startDate> --to-date <endDate>
+python scripts/process_articles.py --prepare --locale <locale> --from-date <startDate> --to-date <endDate>
 ```
 
 Read `output/batch.json` and report the number of articles found. If the batch is empty, skip directly to PowerPoint generation.
@@ -136,7 +185,7 @@ Before running validation, confirm that every `target_file` from `output/batch.j
 Run validation after writing the processed files.
 
 ```bash
-python process_articles.py --validate --locale <locale>
+python scripts/process_articles.py --validate --locale <locale>
 ```
 
 If validation fails, inspect the reported files, fix them, and run validation again until it passes.
@@ -144,7 +193,7 @@ If validation fails, inspect the reported files, fix them, and run validation ag
 ### 6. Generate the index
 
 ```bash
-python process_articles.py --index --locale <locale>
+python scripts/process_articles.py --index --locale <locale>
 ```
 
 Do not hand-author `output/<locale>/index.md`.
@@ -154,8 +203,8 @@ Do not hand-author `output/<locale>/index.md`.
 If labels are filtered, include `--label`. If labels are `all`, omit it.
 
 ```bash
-python create_pptx.py --locale <locale> --from-date <startDate> --to-date <endDate>
-python create_pptx.py --locale <locale> --label <labels> --from-date <startDate> --to-date <endDate>
+python scripts/create_pptx.py --locale <locale> --from-date <startDate> --to-date <endDate>
+python scripts/create_pptx.py --locale <locale> --label <labels> --from-date <startDate> --to-date <endDate>
 ```
 
 Report the output filename and slide count.

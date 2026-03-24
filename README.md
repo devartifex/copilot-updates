@@ -107,7 +107,7 @@ This repository is a **working AI pipeline** powered by a **repo-local Copilot s
 </table>
 
 > [!NOTE]
-> The Copilot skill is **repo-local**: it works in this repository because it wraps the scripts, config, references, and output structure that already live here. The skill supplies workflow knowledge; the Python scripts still do the heavy lifting.
+> This repository **is** the skill. Clone or symlink it to `~/.copilot/skills/copilot-updates/` to use it from any project. The skill supplies workflow knowledge; the Python scripts in `scripts/` do the heavy lifting.
 
 <br/>
 
@@ -121,7 +121,7 @@ Every generated presentation uses a **dark GitHub-themed design** (16:9 widescre
 
 **Title Slide**
 
-<img src="imgs/slides/example-title.png" alt="Title slide" width="100%"/>
+<img src="docs/imgs/slides/example-title.png" alt="Title slide" width="100%"/>
 
 <sub>Date range, active label filters, and source</sub>
 
@@ -130,7 +130,7 @@ Every generated presentation uses a **dark GitHub-themed design** (16:9 widescre
 
 **Section Divider**
 
-<img src="imgs/slides/example-section-divider.png" alt="Section divider" width="100%"/>
+<img src="docs/imgs/slides/example-section-divider.png" alt="Section divider" width="100%"/>
 
 <sub>Category header with article count</sub>
 
@@ -141,7 +141,7 @@ Every generated presentation uses a **dark GitHub-themed design** (16:9 widescre
 
 **Article Hero**
 
-<img src="imgs/slides/example-article-hero.png" alt="Article hero slide" width="100%"/>
+<img src="docs/imgs/slides/example-article-hero.png" alt="Article hero slide" width="100%"/>
 
 <sub>Article title with hero image and date</sub>
 
@@ -150,7 +150,7 @@ Every generated presentation uses a **dark GitHub-themed design** (16:9 widescre
 
 **Summary**
 
-<img src="imgs/slides/example-summary.png" alt="Summary slide" width="100%"/>
+<img src="docs/imgs/slides/example-summary.png" alt="Summary slide" width="100%"/>
 
 <sub>Structured content with source link & speaker notes</sub>
 
@@ -174,9 +174,25 @@ Every generated presentation uses a **dark GitHub-themed design** (16:9 widescre
 | [Python 3.11+](https://www.python.org) | Core runtime |
 | [VS Code](https://code.visualstudio.com/) + [GitHub Copilot](https://github.com/features/copilot) | Optional for chat-based usage |
 
-### Installation
+### Install as a global Copilot skill
 
 ```bash
+# Clone to your user skills directory
+git clone https://github.com/g-mercuri/copilot-updates ~/.copilot/skills/copilot-updates
+
+# Or symlink an existing clone
+ln -s /path/to/copilot-updates ~/.copilot/skills/copilot-updates
+```
+
+On Windows (PowerShell):
+```powershell
+New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.copilot\skills\copilot-updates" -Target "C:\path\to\copilot-updates"
+```
+
+### Install Python dependencies
+
+```bash
+cd scripts
 uv sync
 ```
 
@@ -186,6 +202,7 @@ uv sync
 <br/>
 
 ```bash
+cd scripts
 python -m venv .venv
 .venv\Scripts\Activate.ps1   # Windows
 source .venv/bin/activate    # macOS / Linux
@@ -215,7 +232,7 @@ Open Copilot Chat in this repository and ask Copilot to use the **`/copilot-upda
 
 #### Copilot CLI
 
-This repository now ships an auto-discovered skill at `.github/skills/copilot-updates/SKILL.md`.
+This repository is a self-contained Copilot skill (`SKILL.md` at the root).
 
 You can ask in natural language, or invoke it explicitly:
 
@@ -237,7 +254,7 @@ in italian
 </tr>
 </table>
 
-In Copilot CLI, use `/skills list` to confirm the skill is available and `/skills reload` after editing files under `.github/skills/`.
+In Copilot CLI, use `/skills list` to confirm the skill is available and `/skills reload` after editing skill files.
 
 You'll be prompted for:
 
@@ -256,7 +273,7 @@ Fetch → Prepare → Summarize → Validate → Index → PowerPoint
 
 In practice, the important boundary is:
 
-- `fetch_articles.py`, `process_articles.py`, and `create_pptx.py` do the deterministic work
+- `scripts/fetch_articles.py`, `scripts/process_articles.py`, and `scripts/create_pptx.py` do the deterministic work
 - the skill reads `output/batch.json`, writes each processed article file under `output/{locale}/...`, and then resumes the scripted pipeline
 - before validation, every `target_file` in `output/batch.json` should exist on disk
 
@@ -273,7 +290,7 @@ In practice, the important boundary is:
 <br/>
 
 ```bash
-python fetch_articles.py --labels copilot --from-date 2026-02-01 --to-date 2026-02-25
+python scripts/fetch_articles.py --labels copilot --from-date 2026-02-01 --to-date 2026-02-25
 ```
 
 <details>
@@ -281,10 +298,10 @@ python fetch_articles.py --labels copilot --from-date 2026-02-01 --to-date 2026-
 
 ```bash
 # Multiple labels
-python fetch_articles.py --labels copilot,actions,client-apps --from-date 2026-02-01 --to-date 2026-02-25
+python scripts/fetch_articles.py --labels copilot,actions,client-apps --from-date 2026-02-01 --to-date 2026-02-25
 
 # All labels
-python fetch_articles.py --labels all --from-date 2026-02-01 --to-date 2026-02-25
+python scripts/fetch_articles.py --labels all --from-date 2026-02-01 --to-date 2026-02-25
 ```
 
 | Flag | Default | Description |
@@ -304,7 +321,7 @@ python fetch_articles.py --labels all --from-date 2026-02-01 --to-date 2026-02-2
 <br/>
 
 ```bash
-python process_articles.py --prepare --locale en \
+python scripts/process_articles.py --prepare --locale en \
   --from-date 2026-02-01 --to-date 2026-02-25
 ```
 
@@ -313,8 +330,8 @@ python process_articles.py --prepare --locale en \
 Then verify that every `target_file` listed in `output/batch.json` exists, and continue:
 
 ```bash
-python process_articles.py --validate --locale en
-python process_articles.py --index --locale en
+python scripts/process_articles.py --validate --locale en
+python scripts/process_articles.py --index --locale en
 ```
 
 > [!TIP]
@@ -347,15 +364,15 @@ python process_articles.py --index --locale en
 <br/>
 
 ```bash
-python create_pptx.py --locale it --from-date 2026-02-01 --to-date 2026-02-25
+python scripts/create_pptx.py --locale it --from-date 2026-02-01 --to-date 2026-02-25
 ```
 
 <details>
 <summary>More examples & flags</summary>
 
 ```bash
-python create_pptx.py --label copilot
-python create_pptx.py --label copilot,actions --categories new-release,improvement
+python scripts/create_pptx.py --label copilot
+python scripts/create_pptx.py --label copilot,actions --categories new-release,improvement
 ```
 
 | Flag | Default | Description |
@@ -378,7 +395,7 @@ python create_pptx.py --label copilot,actions --categories new-release,improveme
 
 ## ⚙️ Configuration
 
-All labels, categories, colors, and defaults live in [`config.yaml`](config.yaml).
+All labels, categories, colors, and defaults live in [`scripts/config.yaml`](scripts/config.yaml).
 
 <details>
 <summary>📋 <strong>Supported labels</strong> <sub>(13 labels)</sub></summary>
@@ -454,27 +471,30 @@ The `##` heading varies by type: `What's new` (new-releases), `What changed` (im
 ## 📂 Project Structure
 
 ```
-copilot-updates/
-├── .github/
-│   ├── skills/
-│   │   ├── copilot-updates/
-│   │   │   ├── SKILL.md                   # Auto-discovered Copilot CLI skill
-│   │   │   └── references/                # Skill-local summarization rules
-│   │   └── make-skill-template/
-│   │       └── SKILL.md                   # Downloaded skill template reference
-├── imgs/                                  # Fallback hero images + slide examples
-├── output/                                # Generated artifacts (git-ignored)
-│   ├── raw/                               # Scraped raw articles (language-independent)
-│   └── {locale}/                          # Processed articles per language
-│       ├── index.md
-│       ├── new-releases/
-│       ├── improvements/
-│       └── deprecations/
-├── config.yaml                            # Centralized configuration
-├── fetch_articles.py                      # Stage 1 — Web scraper
-├── process_articles.py                    # Stage 2 — Batch planning, validation, indexing
-├── create_pptx.py                         # Stage 3 — PowerPoint generator
-└── pyproject.toml                         # Project metadata & dependencies
+copilot-updates/                          # Root IS the skill folder
+├── SKILL.md                              # Skill definition (entry point)
+├── scripts/
+│   ├── fetch_articles.py                 # Stage 1 — Web scraper
+│   ├── process_articles.py               # Stage 2 — Batch planning, validation, indexing
+│   ├── create_pptx.py                    # Stage 3 — PowerPoint generator
+│   ├── config.yaml                       # Centralized configuration
+│   ├── pyproject.toml                    # Python dependencies
+│   └── imgs/                             # Fallback hero images
+├── references/                           # Summary format guides (loaded by SKILL.md)
+│   ├── summarize-new-releases.md
+│   ├── summarize-improvements.md
+│   ├── summarize-deprecations.md
+│   └── translate-content.md
+├── docs/imgs/                            # README screenshots
+├── output/                               # Generated artifacts (git-ignored)
+│   ├── raw/                              # Scraped raw articles
+│   └── {locale}/                         # Processed articles per language
+├── README.md
+├── LICENSE
+└── .github/
+    ├── copilot-instructions.md           # Repo-wide Copilot rules
+    └── skills/
+        └── make-skill-template/          # Skill scaffolding utility
 ```
 
 ---
@@ -489,7 +509,7 @@ Contributions are welcome! Here's how to get started:
 4. **Open** a Pull Request
 
 > [!IMPORTANT]
-> When adding new categories or labels, update `config.yaml` — all scripts read it at startup.
+> When adding new categories or labels, update `scripts/config.yaml` — all scripts read it at startup.
 
 <p align="right"><a href="#changelog--powerpoint">⬆ back to top</a></p>
 
